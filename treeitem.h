@@ -19,9 +19,9 @@ public:
     TreeItem *parentItem();
 
 private:
-    QVector<TreeItem *> m_childItems;
-    QVector<QVariant> m_itemData;
-    TreeItem *m_parentItem;
+    QVector<TreeItem *> m_childItems;//Дочерние элементы (те которые имеют свои листья)
+    QVector<QVariant> m_itemData;//Дочерние элементы - листья
+    TreeItem *m_parentItem;//Ссылка над родителя
 };
 
 #endif // TREEITEM_H

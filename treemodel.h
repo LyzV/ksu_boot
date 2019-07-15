@@ -3,13 +3,15 @@
 
 #include <QObject>
 #include <QAbstractItemModel>
+#include <QDir>
+#include <QTextCodec>
 #include "treeitem.h"
 
 class TreeModel : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    explicit TreeModel(const QString &data, QObject *parent = nullptr);
+    explicit TreeModel(QObject *parent = nullptr);
     ~TreeModel() override;
 
     QVariant data(const QModelIndex &index, int role) const override;
@@ -23,9 +25,10 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
 private:
-    void setupModelData(const QStringList &lines, TreeItem *parent);
+    void loadContent(TreeItem *parent, QDir curr_dir, QDir usb_dir);
 
     TreeItem *rootItem;
+    QTextCodec *codec;//Для перевода из cp1251 в utf8
 };
 
 #endif // TREEMODEL_H

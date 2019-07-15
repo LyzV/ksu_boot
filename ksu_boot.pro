@@ -26,17 +26,16 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp \
         treeitem.cpp \
-        treemodel.cpp
+        treemodel.cpp \
+    qksutreeview.cpp
 
 HEADERS += \
-        mainwindow.h \
         treeitem.h \
-        treemodel.h
+        treemodel.h \
+    qksutreeview.h
 
-FORMS += \
-        mainwindow.ui
+FORMS +=
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
