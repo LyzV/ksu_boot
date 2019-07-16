@@ -1,9 +1,9 @@
 #include "treeitem.h"
 
-TreeItem::TreeItem(const QVector<QVariant> &columns, TreeItem *parentItem)
+TreeItem::TreeItem(WhatsThis whats_this, const QVector<QVariant> &columns, TreeItem *parentItem)
     : Columns(columns), Parent(parentItem)
 {
-
+    Whats=whats_this;
 }
 
 TreeItem::~TreeItem()
@@ -51,4 +51,21 @@ int TreeItem::RowNumber() const
 TreeItem *TreeItem::parentItem()
 {
     return Parent;
+}
+
+QString TreeItem::whatsThis() const
+{
+    switch(Whats)
+    {
+    default: return QString("");
+    case Root: return QString("Root");
+    case Storage: return QString("Storage");
+    case Device: return QString("Device");
+    case File: return QString("File");
+    }
+}
+
+QFileInfo TreeItem::fileInfo() const
+{
+    return FileInfo;
 }
