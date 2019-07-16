@@ -33,6 +33,10 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                 }
                 else
                 {
+                    if(
+                            QString::compare("file")
+                            this->model()->data(index, Qt::WhatsThisRole).toString()
+                      )
                     if(this->isExpanded(index)) this->collapse(index);
                     else                        this->expand  (index);
 

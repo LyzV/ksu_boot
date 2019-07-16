@@ -38,6 +38,11 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
             return item->data(index.column());
         }
         break;
+    case Qt::WhatsThisRole:
+        {
+
+        }
+        break;
     default: return QVariant();
     }
 
