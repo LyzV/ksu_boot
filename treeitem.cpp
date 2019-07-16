@@ -1,54 +1,54 @@
 #include "treeitem.h"
 
-TreeItem::TreeItem(const QVector<QVariant> &data, TreeItem *parentItem)
-    : m_itemData(data), m_parentItem(parentItem)
+TreeItem::TreeItem(const QVector<QVariant> &columns, TreeItem *parentItem)
+    : Columns(columns), Parent(parentItem)
 {
 
 }
 
 TreeItem::~TreeItem()
 {
-    qDeleteAll(m_childItems);
+    qDeleteAll(Rows);
 }
 
-void TreeItem::appendChild(TreeItem *child)
+void TreeItem::appendRow(TreeItem *row)
 {
-    if(nullptr!=child)
-        m_childItems.append(child);
+    if(nullptr!=row)
+        Rows.append(row);
 }
 
-TreeItem *TreeItem::child(int row)
+TreeItem *TreeItem::Row(int row_number)
 {
-    if (row < 0 || row >= m_childItems.size())
+    if (row_number < 0 || row_number >= Rows.size())
             return nullptr;
-        return m_childItems.at(row);
+        return Rows.at(row_number);
 }
 
-int TreeItem::childCount() const
+int TreeItem::RowCount() const
 {
-    return m_childItems.count();
+    return Rows.count();
 }
 
-int TreeItem::columnCount() const
+int TreeItem::ColumnCount() const
 {
-    return m_itemData.count();
+    return Columns.count();
 }
 
-QVariant TreeItem::data(int column) const
+QVariant TreeItem::ColumnData(int column_number) const
 {
-    if (column < 0 || column >= m_itemData.size())
+    if (column_number < 0 || column_number >= Columns.size())
         return QVariant();
-    return m_itemData.at(column);
+    return Columns.at(column_number);
 }
 
-int TreeItem::row() const
+int TreeItem::RowNumber() const
 {
-    if (nullptr != m_parentItem)
-        return m_parentItem->m_childItems.indexOf(const_cast<TreeItem*>(this));
+    if (nullptr != Parent)
+        return Parent->Rows.indexOf(const_cast<TreeItem*>(this));
     return 0;
 }
 
 TreeItem *TreeItem::parentItem()
 {
-    return m_parentItem;
+    return Parent;
 }

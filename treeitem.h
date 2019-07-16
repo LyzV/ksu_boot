@@ -7,21 +7,21 @@
 class TreeItem
 {
 public:
-    explicit TreeItem(const QVector<QVariant> &data, TreeItem *parentItem = nullptr);
+    explicit TreeItem(const QVector<QVariant> &columns, TreeItem *parentItem = nullptr);
     ~TreeItem();
 
-    void appendChild(TreeItem *child);
-    TreeItem *child(int row);
-    int childCount() const;
-    int columnCount() const;
-    QVariant data(int column) const;
-    int row() const;
+    void appendRow(TreeItem *row);
+    TreeItem *Row(int row_number);
+    int RowCount() const;
+    int ColumnCount() const;
+    QVariant ColumnData(int column_number) const;
+    int RowNumber() const;
     TreeItem *parentItem();
 
 private:
-    QVector<TreeItem *> m_childItems;//Дочерние элементы (те которые имеют свои листья)
-    QVector<QVariant> m_itemData;//Дочерние элементы - листья
-    TreeItem *m_parentItem;//Ссылка над родителя
+    QVector<TreeItem *> Rows;//Дочерние элементы (те которые имеют свои листья)
+    QVector<QVariant> Columns;//Дочерние элементы - листья
+    TreeItem *Parent;//Ссылка над родителя
 };
 
 #endif // TREEITEM_H
