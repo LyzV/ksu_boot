@@ -33,9 +33,29 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                 }
                 else
                 {
-                    if(this->isExpanded(index)) this->collapse(index);
-                    else                        this->expand  (index);
+                    QString whats=this->model()->data(index, Qt::WhatsThisRole).toString();
+                    if(0==QString::compare(whats, "Root"))
+                    {
+                        QTreeView::keyPressEvent(event);
+                    }
+                    else if(0==QString::compare(whats, "Storage"))
+                    {
+                        if(this->isExpanded(index)) this->collapse(index);
+                        else                        this->expand  (index);
+                    }
+                    else if(0==QString::compare(whats, "Device"))
+                    {
+                        if(this->isExpanded(index)) this->collapse(index);
+                        else                        this->expand  (index);
+                    }
+                    else if(0==QString::compare(whats, "File"))
+                    {
 
+                    }
+                    else
+                    {
+                        QTreeView::keyPressEvent(event);
+                    }
                 }
             }
             else

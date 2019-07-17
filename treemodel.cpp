@@ -38,6 +38,20 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
             return item->ColumnData(index.column());
         }
         break;
+    case Qt::WhatsThisRole:
+        {
+            TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
+            switch(item->whatsThis())
+            {
+            case TreeItem::Root:
+            default: return QString("Root");
+
+            case TreeItem::Storage: return QString("Storage");
+            case TreeItem::Device: return QString("Device");
+            case TreeItem::File: return QString("File");
+            }
+        }
+        break;
     default: return QVariant();
     }
 
