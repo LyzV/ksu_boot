@@ -18,9 +18,23 @@ public:
         File
     };
 
-    explicit TreeItem(WhatsThis whats_this,
-                      const QVector<QVariant> &columns,
-                      TreeItem *parentItem = nullptr);
+    //Конструктор для Root
+    explicit TreeItem(QString column1,
+                      QString column2);
+    //Конструктор для Storage
+    explicit TreeItem(QString column1,
+                      QString column2,
+                      TreeItem &parentItem);
+    //Конструктор для Device
+    explicit TreeItem(QString column1,
+                      QString column2,
+                      const QDir &dir,
+                      TreeItem &parentItem);
+    //Конструктор для File
+    explicit TreeItem(QString column1,
+                      QString column2,
+                      const QFileInfo &file_info,
+                      TreeItem &parentItem);
     ~TreeItem();
 
     void appendRow(TreeItem *row);
@@ -30,14 +44,17 @@ public:
     QVariant ColumnData(int column_number) const;
     int RowNumber() const;
     TreeItem *parentItem();
-    QString whatsThis() const;
-    QFileInfo fileInfo() const;
+    WhatsThis whatsThis() const;
+    const QFileInfo &fileInfo() const;
+    const QDir &dirInfo() const;
 
 private:
     QVector<TreeItem *> Rows;//Дочерние элементы
-    QVector<QVariant> Columns;//Дочерние элементы - листья
     TreeItem *Parent;//Ссылка над родителя
-    WhatsThis Whats;//Что за элемент: хранилище; устройство; файл
+
+    QString Column1="";//У нас только 2 колонки
+    QString Column2="";//У нас только 2 колонки
+    WhatsThis Whats;//Что за элемент: корень; хранилище; устройство; файл.
     QFileInfo FileInfo;//Данные о файле (для File)
     QDir Dir;//Данные о директории (для Storage, Device)
 };

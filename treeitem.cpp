@@ -1,9 +1,39 @@
 #include "treeitem.h"
 
-TreeItem::TreeItem(WhatsThis whats_this, const QVector<QVariant> &columns, TreeItem *parentItem)
-    : Columns(columns), Parent(parentItem)
+
+TreeItem::TreeItem(QString column1,
+                   QString column2)
+    : Parent(nullptr), Column1(column1), Column2(column2)
 {
-    Whats=whats_this;
+    Whats=Root;
+}
+
+TreeItem::TreeItem(QString column1,
+                   QString column2,
+                   TreeItem &parentItem)
+    : Parent(&parentItem), Column1(column1), Column2(column2)
+{
+    Whats=Storage;
+}
+
+TreeItem::TreeItem(QString column1,
+                   QString column2,
+                   const QDir &dir,
+                   TreeItem &parentItem)
+    : Parent(&parentItem), Column1(column1), Column2(column2)
+{
+    Whats=Device;
+    Dir=dir;
+}
+
+TreeItem::TreeItem(QString column1,
+                   QString column2,
+                   const QFileInfo &file_info,
+                   TreeItem &parentItem)
+    : Parent(&parentItem), Column1(column1), Column2(column2)
+{
+    Whats=File;
+    FileInfo=file_info;
 }
 
 TreeItem::~TreeItem()
@@ -31,14 +61,17 @@ int TreeItem::RowCount() const
 
 int TreeItem::ColumnCount() const
 {
-    return Columns.count();
+    return 2;
 }
 
 QVariant TreeItem::ColumnData(int column_number) const
 {
-    if (column_number < 0 || column_number >= Columns.size())
-        return QVariant();
-    return Columns.at(column_number);
+    switch(column_number)
+    {
+    default: return QVariant();
+    case  0: return Column1;
+    case  1: return Column2;
+    }
 }
 
 int TreeItem::RowNumber() const
@@ -53,19 +86,17 @@ TreeItem *TreeItem::parentItem()
     return Parent;
 }
 
-QString TreeItem::whatsThis() const
+TreeItem::WhatsThis TreeItem::whatsThis() const
 {
-    switch(Whats)
-    {
-    default: return QString("");
-    case Root: return QString("Root");
-    case Storage: return QString("Storage");
-    case Device: return QString("Device");
-    case File: return QString("File");
-    }
+    return Whats;
 }
 
-QFileInfo TreeItem::fileInfo() const
+const QFileInfo &TreeItem::fileInfo() const
 {
     return FileInfo;
+}
+
+const QDir &TreeItem::dirInfo() const
+{
+    return Dir;
 }
