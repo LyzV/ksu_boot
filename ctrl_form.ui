@@ -26,6 +26,18 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
+      <widget class="QLabel" name="fileLabel">
+       <property name="font">
+        <font>
+         <pointsize>15</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Выбрана прошивка: </string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QLabel" name="infoLabel">
        <property name="font">
         <font>
@@ -91,14 +103,14 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QPushButton" name="cancelButton">
+      <widget class="QLabel" name="errorLabel">
        <property name="font">
         <font>
-         <pointsize>15</pointsize>
+         <pointsize>20</pointsize>
         </font>
        </property>
        <property name="text">
-        <string>Отменить</string>
+        <string>Ошибка!</string>
        </property>
       </widget>
      </item>

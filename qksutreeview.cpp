@@ -1,11 +1,13 @@
 #include "qksutreeview.h"
 #include "bootnamespase.h"
-#include "qctrlform.h"
 
-QKsuTreeView::QKsuTreeView(QWidget *parent)
-    : QTreeView(parent)
+#define TU(s) codec->toUnicode(s)
+
+QKsuTreeView::QKsuTreeView(QWidget *parent):
+    QTreeView(parent),
+    CtrlForm(nullptr)
 {
-
+    codec=QTextCodec::codecForName("CP1251");
 }
 
 QKsuTreeView::~QKsuTreeView()
@@ -54,14 +56,9 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                         break;
                     case (int)Boot::File:
                         {
-                            //QDialog dialog;
-                            //dialog.setGeometry(10, 10, 100, 100);
-                            //dialog.exec();
-                            QCtrlForm *ctrl_form=new QCtrlForm;
-                            ctrl_form->setParent(this);
-                            ctrl_form->show();
-
-
+                            QString file_name(TU("Прошивка: "));
+                            file_name+=this->model()->data(index, Qt::DisplayRole).toString();
+                            CtrlForm.Exec(file_name);
                         }
                         break;
                     }

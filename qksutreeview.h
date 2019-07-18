@@ -3,10 +3,15 @@
 
 #include <QTreeView>
 #include <QKeyEvent>
+#include "qctrlform.h"
+#include <QTextCodec>
 
 class QKsuTreeView : public QTreeView
 {
     Q_OBJECT
+
+    QCtrlForm CtrlForm;
+    QTextCodec *codec;
 public:
     explicit QKsuTreeView(QWidget *parent=nullptr);
     ~QKsuTreeView();
