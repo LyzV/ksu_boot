@@ -1,4 +1,6 @@
 #include "qksutreeview.h"
+#include "bootnamespase.h"
+#include "qctrlform.h"
 
 QKsuTreeView::QKsuTreeView(QWidget *parent)
     : QTreeView(parent)
@@ -11,7 +13,7 @@ QKsuTreeView::~QKsuTreeView()
 
 }
 
-//#include <QModelIndexList>
+#include <QDialog>
 void QKsuTreeView::keyPressEvent(QKeyEvent *event)
 {
     int key;
@@ -33,28 +35,35 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                 }
                 else
                 {
-                    QString whats=this->model()->data(index, Qt::WhatsThisRole).toString();
-                    if(0==QString::compare(whats, "Root"))
+                    int whats=this->model()->data(index, Boot::WhatsThis_UserRole).toInt();
+                    switch(whats)
                     {
-                        QTreeView::keyPressEvent(event);
-                    }
-                    else if(0==QString::compare(whats, "Storage"))
-                    {
-                        if(this->isExpanded(index)) this->collapse(index);
-                        else                        this->expand  (index);
-                    }
-                    else if(0==QString::compare(whats, "Device"))
-                    {
-                        if(this->isExpanded(index)) this->collapse(index);
-                        else                        this->expand  (index);
-                    }
-                    else if(0==QString::compare(whats, "File"))
-                    {
+                    default:
+                    case (int)Boot::Root: QTreeView::keyPressEvent(event); break;
+                    case (int)Boot::Storage:
+                        {
+                            if(this->isExpanded(index)) this->collapse(index);
+                            else                        this->expand  (index);
+                        }
+                        break;
+                    case (int)Boot::Device:
+                        {
+                            if(this->isExpanded(index)) this->collapse(index);
+                            else                        this->expand  (index);
+                        }
+                        break;
+                    case (int)Boot::File:
+                        {
+                            //QDialog dialog;
+                            //dialog.setGeometry(10, 10, 100, 100);
+                            //dialog.exec();
+                            QCtrlForm *ctrl_form=new QCtrlForm;
+                            ctrl_form->setParent(this);
+                            ctrl_form->show();
 
-                    }
-                    else
-                    {
-                        QTreeView::keyPressEvent(event);
+
+                        }
+                        break;
                     }
                 }
             }

@@ -25,8 +25,10 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
 private:
-    TreeItem *loadDeviceContent(const QString &column1, TreeItem &storage_row, QDir device_dir, QStringList filters);
+    TreeItem *loadDeviceContent(Boot::WhatsSoft soft, TreeItem &storage_row, QDir device_dir, QStringList filters);
     void loadContent(TreeItem &parent, QDir curr_dir, QDir usb_dir);
+    QString Soft2String(Boot::WhatsSoft soft);
+    QString Storage2String(Boot::WhatsStorage storage);
 
     TreeItem *rootItem;
     QTextCodec *codec;//Для перевода из cp1251 в utf8

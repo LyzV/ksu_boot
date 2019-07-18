@@ -28,14 +28,18 @@ SOURCES += \
         main.cpp \
         treeitem.cpp \
         treemodel.cpp \
-    qksutreeview.cpp
+    qksutreeview.cpp \
+    qctrlform.cpp
 
 HEADERS += \
         treeitem.h \
         treemodel.h \
-    qksutreeview.h
+    qksutreeview.h \
+    bootnamespase.h \
+    qctrlform.h
 
-FORMS +=
+FORMS += \
+    ctrl_form.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
