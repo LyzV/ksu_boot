@@ -1,9 +1,13 @@
 #include "qksutreeview.h"
+#include "bootnamespase.h"
 
-QKsuTreeView::QKsuTreeView(QWidget *parent)
-    : QTreeView(parent)
+#define TU(s) codec->toUnicode(s)
+
+QKsuTreeView::QKsuTreeView(QWidget *parent):
+    QTreeView(parent),
+    CtrlForm(nullptr)
 {
-
+    codec=QTextCodec::codecForName("CP1251");
 }
 
 QKsuTreeView::~QKsuTreeView()
@@ -11,7 +15,7 @@ QKsuTreeView::~QKsuTreeView()
 
 }
 
-//#include <QModelIndexList>
+#include <QDialog>
 void QKsuTreeView::keyPressEvent(QKeyEvent *event)
 {
     int key;
@@ -33,13 +37,31 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                 }
                 else
                 {
-                    if(
-                            QString::compare("file")
-                            this->model()->data(index, Qt::WhatsThisRole).toString()
-                      )
-                    if(this->isExpanded(index)) this->collapse(index);
-                    else                        this->expand  (index);
-
+                    int whats=this->model()->data(index, Boot::WhatsThis_UserRole).toInt();
+                    switch(whats)
+                    {
+                    default:
+                    case (int)Boot::Root: QTreeView::keyPressEvent(event); break;
+                    case (int)Boot::Storage:
+                        {
+                            if(this->isExpanded(index)) this->collapse(index);
+                            else                        this->expand  (index);
+                        }
+                        break;
+                    case (int)Boot::Device:
+                        {
+                            if(this->isExpanded(index)) this->collapse(index);
+                            else                        this->expand  (index);
+                        }
+                        break;
+                    case (int)Boot::File:
+                        {
+                            QString file_name(TU("Прошивка: "));
+                            file_name+=this->model()->data(index, Qt::DisplayRole).toString();
+                            CtrlForm.Exec(file_name);
+                        }
+                        break;
+                    }
                 }
             }
             else

@@ -1,8 +1,10 @@
 #include "treemodel.h"
 #include <QApplication>
 #include <QDir>
-#include <QFile>
+#include <QFileInfo>
 #include <QFileInfoList>
+#include <QDateTime>
+#include "bootnamespase.h"
 
 #define TU(s) codec->toUnicode(s)
 
@@ -10,11 +12,10 @@ TreeModel::TreeModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
     codec=QTextCodec::codecForName("CP1251");
-    QString col1=codec->toUnicode("Прошивка");
-    QString col2=codec->toUnicode("Дата");
 
-    rootItem = new TreeItem({ col1, col2});
-    loadContent(rootItem, QApplication::applicationDirPath(), QApplication::applicationDirPath());
+    rootItem = new TreeItem(TU("ПРОШИВКА"), TU("ДАТА"));
+    Q_ASSERT(rootItem);
+    loadContent(*rootItem, QApplication::applicationDirPath(), QApplication::applicationDirPath());
 
 }
 
@@ -30,23 +31,27 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
         return QVariant();
 
+    TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
     switch(role)
     {
-    case Qt::DisplayRole:
-        {
-            TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
-            return item->data(index.column());
-        }
-        break;
+    case Qt::DisplayRole: return item->ColumnData(index.column());
     case Qt::WhatsThisRole:
         {
-
+            switch(item->whatsThis())
+            {
+            default:
+            case Boot::Root: return QString("Root");
+            case Boot::Storage: return QString("Storage");
+            case Boot::Device: return QString("Device");
+            case Boot::File: return QString("File");
+            }
         }
         break;
+    case Boot::WhatsThis_UserRole: return item->whatsThis();
+    case Boot::WhatsStorage_UserRole: return item->whatsStorage();
+    case Boot::WhatsSoft_UserRole: return item->whatsSoft();
     default: return QVariant();
     }
-
-
 }
 
 Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
@@ -60,7 +65,7 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
 QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
-        return rootItem->data(section);
+        return rootItem->ColumnData(section);
 
     return QVariant();
 }
@@ -77,7 +82,7 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex &parent) con
     else
         parentItem = static_cast<TreeItem*>(parent.internalPointer());
 
-    TreeItem *childItem = parentItem->child(row);
+    TreeItem *childItem = parentItem->Row(row);
     if (childItem)
         return createIndex(row, column, childItem);
     return QModelIndex();
@@ -94,7 +99,7 @@ QModelIndex TreeModel::parent(const QModelIndex &index) const
     if (parentItem == rootItem)
         return QModelIndex();
 
-    return createIndex(parentItem->row(), 0, parentItem);
+    return createIndex(parentItem->RowNumber(), 0, parentItem);
 }
 
 int TreeModel::rowCount(const QModelIndex &parent) const
@@ -108,196 +113,132 @@ int TreeModel::rowCount(const QModelIndex &parent) const
     else
         parentItem = static_cast<TreeItem*>(parent.internalPointer());
 
-    return parentItem->childCount();
+    return parentItem->RowCount();
 }
 
 int TreeModel::columnCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
-        return static_cast<TreeItem*>(parent.internalPointer())->columnCount();
-    return rootItem->columnCount();
+        return static_cast<TreeItem*>(parent.internalPointer())->ColumnCount();
+    return rootItem->ColumnCount();
 }
 
-#include <QStringList>
-#include <QFileInfo>
-#include <QFileInfoList>
-#include <QDateTime>
-void TreeModel::loadContent(TreeItem *parent, QDir curr_dir, QDir usb_dir)
+TreeItem * TreeModel::loadDeviceContent(Boot::WhatsSoft soft, TreeItem &storage_row, QDir device_dir, QStringList filters)
 {
+    TreeItem *device_row=new TreeItem(Soft2String(soft), TU(""), soft, device_dir, storage_row);
+    Q_ASSERT(device_row);
 
+    QFileInfoList file_info_list=device_dir.entryInfoList(filters, QDir::Files);
+    for(int file_num=0; file_num<file_info_list.count(); ++file_num)
+    {
+        QFileInfo file_info(file_info_list[file_num]);
+        QDateTime dt=file_info.created();
+        TreeItem *file_row=new TreeItem(file_info.fileName(), dt.toString("yy/MM/dd hh:mm"), file_info, *device_row);
+        Q_ASSERT(file_row);
+        device_row->appendRow(file_row);
+    }
+    return device_row;
+}
+////Конструктор для Storage
+
+void TreeModel::loadContent(TreeItem &parent, QDir curr_dir, QDir usb_dir)
+{
     {//Носитель - КСУ
-        //Создаём и добавляем устройство
-        QVector<QVariant> storage_vector(1);
-        storage_vector[0]=TU("Носитель: блок КСУ");
-        TreeItem *storage_item=new TreeItem(storage_vector, parent);
-        parent->appendChild(storage_item);
+        TreeItem *storage_row=new TreeItem(Storage2String(Boot::KsuStorage), TU(""), Boot::KsuStorage, parent);
+        Q_ASSERT(storage_row);
+        parent.appendRow(storage_row);
 
+        //Создаём и добавляем устройство
         {//ПО КСУ
             QDir dir=curr_dir;
-
-            QVector<QVariant> device_vector(2);
-            device_vector[0]=TU("Рабочее ПО для блока КСУ");
-            device_vector[1]="--";
-            TreeItem *device_item=new TreeItem(device_vector, storage_item);
-            storage_item->appendChild(device_item);
-
             dir.mkdir("KSU"); dir.cd("KSU");
             QStringList filters; filters.append(QString("*.ksu"));
-            QFileInfoList file_info_list=dir.entryInfoList(filters, QDir::Files);
-            for(int file_num=0; file_num<file_info_list.count(); ++file_num)
-            {
-                QVector<QVariant> file_vector(2);
-                file_vector[0]=file_info_list[file_num].fileName();
-                QDateTime dt=file_info_list[file_num].created();
-                file_vector[1]=dt.toString("yy/MM/dd hh:mm");
-                TreeItem *file_item=new TreeItem(file_vector, device_item);
-                device_item->appendChild(file_item);
-            }
+            TreeItem *device_row=loadDeviceContent(Boot::WorkKSU, *storage_row, dir, filters);
+            storage_row->appendRow(device_row);
         }
         {//ПО КИ
             QDir dir=curr_dir;
-
-            QVector<QVariant> device_vector(2);
-            device_vector[0]=TU("ПО для блока КИ");
-            device_vector[1]="--";
-            TreeItem *device_item=new TreeItem(device_vector, storage_item);
-            storage_item->appendChild(device_item);
-
             dir.mkdir("KI"); dir.cd("KI");
             QStringList filters; filters.append(QString("*.ki"));
-            QFileInfoList file_info_list=dir.entryInfoList(filters, QDir::Files);
-            for(int file_num=0; file_num<file_info_list.count(); ++file_num)
-            {
-                QVector<QVariant> file_vector(2);
-                file_vector[0]=file_info_list[file_num].fileName();
-                QDateTime dt=file_info_list[file_num].created();
-                file_vector[1]=dt.toString("yy/MM/dd hh:mm");
-                TreeItem *file_item=new TreeItem(file_vector, device_item);
-                device_item->appendChild(file_item);
-            }
+            TreeItem *device_row=loadDeviceContent(Boot::KI, *storage_row, dir, filters);
+            storage_row->appendRow(device_row);
         }
         {//ПО загрузчика КСУ
             QDir dir=curr_dir;
-
-            QVector<QVariant> device_vector(2);
-            device_vector[0]=TU("ПО загрузчика блока КСУ");
-            device_vector[1]="--";
-            TreeItem *device_item=new TreeItem(device_vector, storage_item);
-            storage_item->appendChild(device_item);
-
             dir.mkdir("LDR"); dir.cd("LDR");
             QStringList filters; filters.append(QString("*.ldr"));
-            QFileInfoList file_info_list=dir.entryInfoList(filters, QDir::Files);
-            for(int file_num=0; file_num<file_info_list.count(); ++file_num)
-            {
-                QVector<QVariant> file_vector(2);
-                file_vector[0]=file_info_list[file_num].fileName();
-                QDateTime dt=file_info_list[file_num].created();
-                file_vector[1]=dt.toString("yy/MM/dd hh:mm");
-                TreeItem *file_item=new TreeItem(file_vector, device_item);
-                device_item->appendChild(file_item);
-            }
+            TreeItem *device_row=loadDeviceContent(Boot::LoaderKSU, *storage_row, dir, filters);
+            storage_row->appendRow(device_row);
         }
     }
 
 
-
-
     {//Носитель - USB
         //Создаём и добавляем устройство
-        QVector<QVariant> storage_vector(1);
-        storage_vector[0]=TU("Носитель: USB-flash накопитель");
-        TreeItem *storage_item=new TreeItem(storage_vector, parent);
-        parent->appendChild(storage_item);
+        TreeItem *storage_row=new TreeItem(Storage2String(Boot::UsbStorage), TU(""), Boot::UsbStorage, parent);
+        Q_ASSERT(storage_row);
+        parent.appendRow(storage_row);
 
         {//ПО КСУ
             QDir dir=usb_dir;
-
-            QVector<QVariant> device_vector(2);
-            device_vector[0]=TU("Рабочее ПО для блока КСУ");
-            device_vector[1]="--";
-            TreeItem *device_item=new TreeItem(device_vector, storage_item);
-            storage_item->appendChild(device_item);
-
             dir.mkdir("KSU"); dir.cd("KSU");
             QStringList filters; filters.append(QString("*.ksu"));
-            QFileInfoList file_info_list=dir.entryInfoList(filters, QDir::Files);
-            for(int file_num=0; file_num<file_info_list.count(); ++file_num)
-            {
-                QVector<QVariant> file_vector(2);
-                file_vector[0]=file_info_list[file_num].fileName();
-                QDateTime dt=file_info_list[file_num].created();
-                file_vector[1]=dt.toString("yy/MM/dd hh:mm");
-                TreeItem *file_item=new TreeItem(file_vector, device_item);
-                device_item->appendChild(file_item);
-            }
+            TreeItem *device_row=loadDeviceContent(Boot::WorkKSU, *storage_row, dir, filters);
+            storage_row->appendRow(device_row);
         }
         {//ПО КИ
             QDir dir=usb_dir;
-
-            QVector<QVariant> device_vector(2);
-            device_vector[0]=TU("ПО для блока КИ");
-            device_vector[1]="--";
-            TreeItem *device_item=new TreeItem(device_vector, storage_item);
-            storage_item->appendChild(device_item);
-
             dir.mkdir("KI"); dir.cd("KI");
             QStringList filters; filters.append(QString("*.ki"));
-            QFileInfoList file_info_list=dir.entryInfoList(filters, QDir::Files);
-            for(int file_num=0; file_num<file_info_list.count(); ++file_num)
-            {
-                QVector<QVariant> file_vector(2);
-                file_vector[0]=file_info_list[file_num].fileName();
-                QDateTime dt=file_info_list[file_num].created();
-                file_vector[1]=dt.toString("yy/MM/dd hh:mm");
-                TreeItem *file_item=new TreeItem(file_vector, device_item);
-                device_item->appendChild(file_item);
-            }
+            TreeItem *device_row=loadDeviceContent(Boot::KI, *storage_row, dir, filters);
+            storage_row->appendRow(device_row);
+        }
+        {//ПО КПТ
+            QDir dir=usb_dir;
+            dir.mkdir("KPT"); dir.cd("KPT");
+            QStringList filters; filters.append(QString("*.kpt"));
+            TreeItem *device_row=loadDeviceContent(Boot::KPT, *storage_row, dir, filters);
+            storage_row->appendRow(device_row);
         }
         {//ПО загрузчика КСУ
             QDir dir=usb_dir;
-
-            QVector<QVariant> device_vector(2);
-            device_vector[0]=TU("ПО загрузчика блока КСУ");
-            device_vector[1]="--";
-            TreeItem *device_item=new TreeItem(device_vector, storage_item);
-            storage_item->appendChild(device_item);
-
             dir.mkdir("LDR"); dir.cd("LDR");
             QStringList filters; filters.append(QString("*.ldr"));
-            QFileInfoList file_info_list=dir.entryInfoList(filters, QDir::Files);
-            for(int file_num=0; file_num<file_info_list.count(); ++file_num)
-            {
-                QVector<QVariant> file_vector(2);
-                file_vector[0]=file_info_list[file_num].fileName();
-                QDateTime dt=file_info_list[file_num].created();
-                file_vector[1]=dt.toString("yy/MM/dd hh:mm");
-                TreeItem *file_item=new TreeItem(file_vector, device_item);
-                device_item->appendChild(file_item);
-            }
+            TreeItem *device_row=loadDeviceContent(Boot::LoaderKSU, *storage_row, dir, filters);
+            storage_row->appendRow(device_row);
         }
         {//Системное ПО КСУ
             QDir dir=usb_dir;
-
-            QVector<QVariant> device_vector(2);
-            device_vector[0]=TU("Системное ПО блока КСУ");
-            device_vector[1]="--";
-            TreeItem *device_item=new TreeItem(device_vector, storage_item);
-            storage_item->appendChild(device_item);
-
             dir.mkdir("KRNL"); dir.cd("KRNL");
             QStringList filters; filters.append(QString("*.krnl"));
-            QFileInfoList file_info_list=dir.entryInfoList(filters, QDir::Files);
-            for(int file_num=0; file_num<file_info_list.count(); ++file_num)
-            {
-                QVector<QVariant> file_vector(2);
-                file_vector[0]=file_info_list[file_num].fileName();
-                QDateTime dt=file_info_list[file_num].created();
-                file_vector[1]=dt.toString("yy/MM/dd hh:mm");
-                TreeItem *file_item=new TreeItem(file_vector, device_item);
-                device_item->appendChild(file_item);
-            }
+            TreeItem *device_row=loadDeviceContent(Boot::SysKSU, *storage_row, dir, filters);
+            storage_row->appendRow(device_row);
         }
+    }
+}
+
+QString TreeModel::Soft2String(Boot::WhatsSoft soft)
+{
+    switch(soft)
+    {
+    default:
+    case Boot::OtherSoft: return QString("");
+    case Boot::WorkKSU  : return QString(TU("Рабочее ПО для блока КСУ"));
+    case Boot::LoaderKSU: return QString(TU("ПО загрузчика блока КСУ"));
+    case Boot::SysKSU   : return QString(TU("Системное ПО блока КСУ"));
+    case Boot::KI       : return QString(TU("Рабочее ПО блока КИ"));
+    case Boot::KPT      : return QString(TU("Рабочее ПО блока КПТ"));
+    }
+}
+
+QString TreeModel::Storage2String(Boot::WhatsStorage storage)
+{
+    switch(storage)
+    {
+    default:
+    case Boot::OtherSrorage: return QString("");
+    case Boot::KsuStorage  : return QString(TU("Носитель: блок КСУ"));
+    case Boot::UsbStorage  : return QString(TU("Носитель: USB-flash накопитель"));
     }
 }
 
