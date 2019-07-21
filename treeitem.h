@@ -11,21 +11,21 @@
 class TreeItem
 {
 public:
-    //Конструктор для Root
+    //РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РґР»СЏ Root
     explicit TreeItem(QString column1,
                       QString column2);
-    //Конструктор для Storage
+    //РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РґР»СЏ Storage
     explicit TreeItem(QString column1,
                       QString column2,
                       Boot::WhatsStorage storage,
                       TreeItem &parentItem);
-    //Конструктор для Device
+    //РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РґР»СЏ Device
     explicit TreeItem(QString column1,
                       QString column2,
                       Boot::WhatsSoft soft,
                       const QDir &dir,
                       TreeItem &parentItem);
-    //Конструктор для File
+    //РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РґР»СЏ File
     explicit TreeItem(QString column1,
                       QString column2,
                       const QFileInfo &file_info,
@@ -48,16 +48,16 @@ public:
 
 
 private:
-    QVector<TreeItem *> Rows;//Дочерние элементы
-    TreeItem *Parent;//Ссылка над родителя
+    QVector<TreeItem *> Rows;//Р”РѕС‡РµСЂРЅРёРµ СЌР»РµРјРµРЅС‚С‹
+    TreeItem *Parent;//РЎСЃС‹Р»РєР° РЅР°Рґ СЂРѕРґРёС‚РµР»СЏ
 
-    QString Column1="";//У нас только 2 колонки
-    QString Column2="";//У нас только 2 колонки
-    Boot::WhatsStorage WhatIsStorage;//Что за носитель: блок КСУ; USB-флеш
-    Boot::WhatsSoft WhatIsSoft;//Что за ПО: рабочее ПО КСУ; ПО загрузчика КСУ; системное ПО; ПО блока КИ; ПО блока КПТ
-    Boot::WhatsThis WhatIsThis;//Что за элемент: корень; хранилище; устройство; файл.
-    QFileInfo FileInfo;//Данные о файле (для File)
-    QDir Dir;//Данные о директории (для Storage, Device)
+    QString Column1="";//РЈ РЅР°СЃ С‚РѕР»СЊРєРѕ 2 РєРѕР»РѕРЅРєРё
+    QString Column2="";//РЈ РЅР°СЃ С‚РѕР»СЊРєРѕ 2 РєРѕР»РѕРЅРєРё
+    Boot::WhatsStorage WhatIsStorage;//Р§С‚Рѕ Р·Р° РЅРѕСЃРёС‚РµР»СЊ: Р±Р»РѕРє РљРЎРЈ; USB-С„Р»РµС€
+    Boot::WhatsSoft WhatIsSoft;//Р§С‚Рѕ Р·Р° РџРћ: СЂР°Р±РѕС‡РµРµ РџРћ РљРЎРЈ; РџРћ Р·Р°РіСЂСѓР·С‡РёРєР° РљРЎРЈ; СЃРёСЃС‚РµРјРЅРѕРµ РџРћ; РџРћ Р±Р»РѕРєР° РљР; РџРћ Р±Р»РѕРєР° РљРџРў
+    Boot::WhatsThis WhatIsThis;//Р§С‚Рѕ Р·Р° СЌР»РµРјРµРЅС‚: РєРѕСЂРµРЅСЊ; С…СЂР°РЅРёР»РёС‰Рµ; СѓСЃС‚СЂРѕР№СЃС‚РІРѕ; С„Р°Р№Р».
+    QFileInfo FileInfo;//Р”Р°РЅРЅС‹Рµ Рѕ С„Р°Р№Р»Рµ (РґР»СЏ File)
+    QDir Dir;//Р”Р°РЅРЅС‹Рµ Рѕ РґРёСЂРµРєС‚РѕСЂРёРё (РґР»СЏ Storage, Device)
 };
 
 #endif // TREEITEM_H

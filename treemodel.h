@@ -31,7 +31,7 @@ private:
     QString Storage2String(Boot::WhatsStorage storage);
 
     TreeItem *rootItem;
-    QTextCodec *codec;//Для перевода из cp1251 в utf8
+    QTextCodec *codec;//Р”Р»СЏ РїРµСЂРµРІРѕРґР° РёР· cp1251 РІ utf8
 };
 
 #endif // TREEMODEL_H

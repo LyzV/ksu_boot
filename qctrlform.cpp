@@ -3,7 +3,7 @@
 #include <QThread>
 #include <QMessageBox>
 
-#define TU(s) codec->toUnicode(s)
+#define TU(s) s
 
 QCtrlForm::QCtrlForm(QWidget *parent) :
     QDialog(parent),
@@ -44,7 +44,7 @@ int QCtrlForm::Exec(const QString &file)
 
 void QCtrlForm::progSlot()
 {
-    ui->doLabel->setText(TU("Программирую..."));
+    ui->doLabel->setText(TU("РџСЂРѕРіСЂР°РјРјРёСЂСѓСЋ..."));
     ui->doProgBar->setValue(0);
     ui->doLabel->show();
     ui->doProgBar->show();
@@ -60,5 +60,5 @@ void QCtrlForm::progSlot()
     }
     ui->doProgBar->setValue(ui->doProgBar->maximum());
     ui->errorLabel->show();
-    ui->doLabel->setText(TU("Контроллер успешно запрограммирован!"));
+    ui->doLabel->setText(TU("РљРѕРЅС‚СЂРѕР»Р»РµСЂ СѓСЃРїРµС€РЅРѕ Р·Р°РїСЂРѕРіСЂР°РјРјРёСЂРѕРІР°РЅ!"));
 }

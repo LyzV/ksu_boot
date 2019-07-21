@@ -1,7 +1,7 @@
 #include "qksutreeview.h"
 #include "bootnamespase.h"
 
-#define TU(s) codec->toUnicode(s)
+#define TU(s) s
 
 QKsuTreeView::QKsuTreeView(QWidget *parent):
     QTreeView(parent),
@@ -56,7 +56,7 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                         break;
                     case (int)Boot::File:
                         {
-                            QString file_name(TU("Ïðîøèâêà: "));
+                            QString file_name(TU("ÐŸÑ€Ð¾ÑˆÐ¸Ð²ÐºÐ°: "));
                             file_name+=this->model()->data(index, Qt::DisplayRole).toString();
                             CtrlForm.Exec(file_name);
                         }

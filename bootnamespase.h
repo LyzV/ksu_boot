@@ -6,7 +6,7 @@
 namespace Boot
 {
 
-//Новые роли
+//РќРѕРІС‹Рµ СЂРѕР»Рё
 enum SomeUserRole
 {
     WhatsThis_UserRole=Qt::UserRole,

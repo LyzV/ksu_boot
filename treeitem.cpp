@@ -1,6 +1,6 @@
 #include "treeitem.h"
 
-//Для корня
+//Р”Р»СЏ РєРѕСЂРЅСЏ
 TreeItem::TreeItem(QString column1,
                    QString column2)
     : Parent(nullptr), Column1(column1), Column2(column2)
@@ -10,7 +10,7 @@ TreeItem::TreeItem(QString column1,
     WhatIsSoft=Boot::OtherSoft;
 }
 
-//Для хранилища
+//Р”Р»СЏ С…СЂР°РЅРёР»РёС‰Р°
 TreeItem::TreeItem(QString column1,
                    QString column2,
                    Boot::WhatsStorage storage,
@@ -22,7 +22,7 @@ TreeItem::TreeItem(QString column1,
     WhatIsSoft=Boot::OtherSoft;
 }
 
-//Для устройства
+//Р”Р»СЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 TreeItem::TreeItem(QString column1,
                    QString column2,
                    Boot::WhatsSoft soft,
@@ -36,7 +36,7 @@ TreeItem::TreeItem(QString column1,
     Dir=dir;
 }
 
-//Для файла
+//Р”Р»СЏ С„Р°Р№Р»Р°
 TreeItem::TreeItem(QString column1,
                    QString column2,
                    const QFileInfo &file_info,
