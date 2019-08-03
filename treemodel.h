@@ -25,13 +25,11 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
 private:
-    TreeItem *loadDeviceContent(Boot::WhatsSoft soft, TreeItem &storage_row, QDir device_dir, QStringList filters);
-    void loadContent(TreeItem &parent, QDir curr_dir, QDir usb_dir);
-    QString Soft2String(Boot::WhatsSoft soft);
-    QString Storage2String(Boot::WhatsStorage storage);
+    QString Soft2String(int soft_type);
+    QString Storage2String(int storage_type);
 
     TreeItem *rootItem;
-    QTextCodec *codec;//Для перевода из cp1251 в utf8
+    QTextCodec *codec;//Translate from cp1251 to utf8
 };
 
 #endif // TREEMODEL_H

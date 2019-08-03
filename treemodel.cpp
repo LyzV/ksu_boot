@@ -125,103 +125,102 @@ int TreeModel::columnCount(const QModelIndex &parent) const
     return rootItem->ColumnCount();
 }
 
-TreeItem * TreeModel::loadDeviceContent(Boot::WhatsSoft soft, TreeItem &storage_row, QDir device_dir, QStringList filters)
+//TreeItem * TreeModel::loadDeviceContent(Boot::WhatsSoft soft, TreeItem &storage_row, QDir device_dir, QStringList filters)
+//{
+//    TreeItem *device_row=new TreeItem(Soft2String(soft), TU(""), soft, device_dir, storage_row);
+//    Q_ASSERT(device_row);
+
+//    QFileInfoList file_info_list=device_dir.entryInfoList(filters, QDir::Files);
+//    for(int file_num=0; file_num<file_info_list.count(); ++file_num)
+//    {
+//        QFileInfo file_info(file_info_list[file_num]);
+//        QDateTime dt=file_info.created();//birthTime();
+//        TreeItem *file_row=new TreeItem(file_info.fileName(), dt.toString("yy/MM/dd hh:mm"), file_info, *device_row);
+//        Q_ASSERT(file_row);
+//        device_row->appendRow(file_row);
+//    }
+//    return device_row;
+//}
+
+//void TreeModel::loadContent(TreeItem &parent, QDir curr_dir, QDir usb_dir)
+//{
+//    {//Носитель - КСУ
+//        TreeItem *storage_row=new TreeItem(Storage2String(Boot::KsuStorage), TU(""), Boot::KsuStorage, parent);
+//        Q_ASSERT(storage_row);
+//        parent.appendRow(storage_row);
+
+//        //Создаём и добавляем устройство
+//        {//ПО КСУ
+//            QDir dir=curr_dir;
+//            dir.mkdir("KSU"); dir.cd("KSU");
+//            QStringList filters; filters.append(QString("*.ksu"));
+//            TreeItem *device_row=loadDeviceContent(Boot::WorkKSU, *storage_row, dir, filters);
+//            storage_row->appendRow(device_row);
+//        }
+//        {//ПО КИ
+//            QDir dir=curr_dir;
+//            dir.mkdir("KI"); dir.cd("KI");
+//            QStringList filters; filters.append(QString("*.ki"));
+//            TreeItem *device_row=loadDeviceContent(Boot::KI, *storage_row, dir, filters);
+//            storage_row->appendRow(device_row);
+//        }
+//        {//ПО загрузчика КСУ
+//            QDir dir=curr_dir;
+//            dir.mkdir("LDR"); dir.cd("LDR");
+//            QStringList filters; filters.append(QString("*.ldr"));
+//            TreeItem *device_row=loadDeviceContent(Boot::LoaderKSU, *storage_row, dir, filters);
+//            storage_row->appendRow(device_row);
+//        }
+//    }
+
+
+//    {//Носитель - USB
+//        //Создаём и добавляем устройство
+//        TreeItem *storage_row=new TreeItem(Storage2String(Boot::UsbStorage), TU(""), Boot::UsbStorage, parent);
+//        Q_ASSERT(storage_row);
+//        parent.appendRow(storage_row);
+
+//        {//ПО КСУ
+//            QDir dir=usb_dir;
+//            dir.mkdir("KSU"); dir.cd("KSU");
+//            QStringList filters; filters.append(QString("*.ksu"));
+//            TreeItem *device_row=loadDeviceContent(Boot::WorkKSU, *storage_row, dir, filters);
+//            storage_row->appendRow(device_row);
+//        }
+//        {//ПО КИ
+//            QDir dir=usb_dir;
+//            dir.mkdir("KI"); dir.cd("KI");
+//            QStringList filters; filters.append(QString("*.ki"));
+//            TreeItem *device_row=loadDeviceContent(Boot::KI, *storage_row, dir, filters);
+//            storage_row->appendRow(device_row);
+//        }
+//        {//ПО КПТ
+//            QDir dir=usb_dir;
+//            dir.mkdir("KPT"); dir.cd("KPT");
+//            QStringList filters; filters.append(QString("*.kpt"));
+//            TreeItem *device_row=loadDeviceContent(Boot::KPT, *storage_row, dir, filters);
+//            storage_row->appendRow(device_row);
+//        }
+//        {//ПО загрузчика КСУ
+//            QDir dir=usb_dir;
+//            dir.mkdir("LDR"); dir.cd("LDR");
+//            QStringList filters; filters.append(QString("*.ldr"));
+//            TreeItem *device_row=loadDeviceContent(Boot::LoaderKSU, *storage_row, dir, filters);
+//            storage_row->appendRow(device_row);
+//        }
+//        {//Системное ПО КСУ
+//            QDir dir=usb_dir;
+//            dir.mkdir("KRNL"); dir.cd("KRNL");
+//            QStringList filters; filters.append(QString("*.krnl"));
+//            TreeItem *device_row=loadDeviceContent(Boot::SysKSU, *storage_row, dir, filters);
+//            storage_row->appendRow(device_row);
+//        }
+//    }
+//}
+
+QString TreeModel::Soft2String(int soft_type)
 {
-    TreeItem *device_row=new TreeItem(Soft2String(soft), TU(""), soft, device_dir, storage_row);
-    Q_ASSERT(device_row);
-
-    QFileInfoList file_info_list=device_dir.entryInfoList(filters, QDir::Files);
-    for(int file_num=0; file_num<file_info_list.count(); ++file_num)
-    {
-        QFileInfo file_info(file_info_list[file_num]);
-        QDateTime dt=file_info.birthTime();
-        TreeItem *file_row=new TreeItem(file_info.fileName(), dt.toString("yy/MM/dd hh:mm"), file_info, *device_row);
-        Q_ASSERT(file_row);
-        device_row->appendRow(file_row);
-    }
-    return device_row;
-}
-////Конструктор для Storage
-
-void TreeModel::loadContent(TreeItem &parent, QDir curr_dir, QDir usb_dir)
-{
-    {//Носитель - КСУ
-        TreeItem *storage_row=new TreeItem(Storage2String(Boot::KsuStorage), TU(""), Boot::KsuStorage, parent);
-        Q_ASSERT(storage_row);
-        parent.appendRow(storage_row);
-
-        //Создаём и добавляем устройство
-        {//ПО КСУ
-            QDir dir=curr_dir;
-            dir.mkdir("KSU"); dir.cd("KSU");
-            QStringList filters; filters.append(QString("*.ksu"));
-            TreeItem *device_row=loadDeviceContent(Boot::WorkKSU, *storage_row, dir, filters);
-            storage_row->appendRow(device_row);
-        }
-        {//ПО КИ
-            QDir dir=curr_dir;
-            dir.mkdir("KI"); dir.cd("KI");
-            QStringList filters; filters.append(QString("*.ki"));
-            TreeItem *device_row=loadDeviceContent(Boot::KI, *storage_row, dir, filters);
-            storage_row->appendRow(device_row);
-        }
-        {//ПО загрузчика КСУ
-            QDir dir=curr_dir;
-            dir.mkdir("LDR"); dir.cd("LDR");
-            QStringList filters; filters.append(QString("*.ldr"));
-            TreeItem *device_row=loadDeviceContent(Boot::LoaderKSU, *storage_row, dir, filters);
-            storage_row->appendRow(device_row);
-        }
-    }
-
-
-    {//Носитель - USB
-        //Создаём и добавляем устройство
-        TreeItem *storage_row=new TreeItem(Storage2String(Boot::UsbStorage), TU(""), Boot::UsbStorage, parent);
-        Q_ASSERT(storage_row);
-        parent.appendRow(storage_row);
-
-        {//ПО КСУ
-            QDir dir=usb_dir;
-            dir.mkdir("KSU"); dir.cd("KSU");
-            QStringList filters; filters.append(QString("*.ksu"));
-            TreeItem *device_row=loadDeviceContent(Boot::WorkKSU, *storage_row, dir, filters);
-            storage_row->appendRow(device_row);
-        }
-        {//ПО КИ
-            QDir dir=usb_dir;
-            dir.mkdir("KI"); dir.cd("KI");
-            QStringList filters; filters.append(QString("*.ki"));
-            TreeItem *device_row=loadDeviceContent(Boot::KI, *storage_row, dir, filters);
-            storage_row->appendRow(device_row);
-        }
-        {//ПО КПТ
-            QDir dir=usb_dir;
-            dir.mkdir("KPT"); dir.cd("KPT");
-            QStringList filters; filters.append(QString("*.kpt"));
-            TreeItem *device_row=loadDeviceContent(Boot::KPT, *storage_row, dir, filters);
-            storage_row->appendRow(device_row);
-        }
-        {//ПО загрузчика КСУ
-            QDir dir=usb_dir;
-            dir.mkdir("LDR"); dir.cd("LDR");
-            QStringList filters; filters.append(QString("*.ldr"));
-            TreeItem *device_row=loadDeviceContent(Boot::LoaderKSU, *storage_row, dir, filters);
-            storage_row->appendRow(device_row);
-        }
-        {//Системное ПО КСУ
-            QDir dir=usb_dir;
-            dir.mkdir("KRNL"); dir.cd("KRNL");
-            QStringList filters; filters.append(QString("*.krnl"));
-            TreeItem *device_row=loadDeviceContent(Boot::SysKSU, *storage_row, dir, filters);
-            storage_row->appendRow(device_row);
-        }
-    }
-}
-
-QString TreeModel::Soft2String(Boot::WhatsSoft soft)
-{
-    switch(soft)
+    switch(soft_type)
     {
     //default:
     case Boot::OtherSoft: return QString("");
