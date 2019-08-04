@@ -44,16 +44,18 @@ class TreeItem
 {
     int whats=WT_ROOT;
     TreeItem *Parent=nullptr;
+    int number=-1;
 
 public:
-    explicit TreeItem(int whats=WT_ROOT, TreeItem *parent=nullptr){ this->whats=whats; Parent=parent; }
+    explicit TreeItem(int whats=WT_ROOT, TreeItem *parent=nullptr);
     ~TreeItem(){ qDeleteAll(Rows); }
 
     int WhatIsThis() const { return whats; }
     TreeItem *parentItem() const { return Parent; }
+    int RowNumber() const { return number; }
 
     void createStorage(int type, const QString &path);
-    void createSoft(int type, const QString &name, const QStringList &filt);
+    void createSoft(int type, const QString &path, const QStringList &filt);
 
     QVector<TreeItem *> Rows;
     QStringList Columns;

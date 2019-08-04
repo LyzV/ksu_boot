@@ -4,25 +4,28 @@
 #include <QFileInfo>
 #include <QFileInfoList>
 #include <QDateTime>
-#include "bootnamespase.h"
 
-#define TU(s) s
+#define TU(s) tr(s)
+
+#define HEADER1 TU("ПРОШИВКА")
+#define HEADER2 TU("ДАТА")
 
 TreeModel::TreeModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
     codec=QTextCodec::codecForName("CP1251");
 
-    rootItem = new TreeItem(TU("ПРОШИВКА"), TU("ДАТА"));
+    rootItem = new TreeItem;
     Q_ASSERT(rootItem);
-    loadContent(*rootItem, QApplication::applicationDirPath(), QApplication::applicationDirPath());
+    rootItem->Columns.append(HEADER1);
+    rootItem->Columns.append(HEADER2);
+    //loadContent(*rootItem, QApplication::applicationDirPath(), QApplication::applicationDirPath());
 
 }
 
 TreeModel::~TreeModel()
 {
-    //saveSettings(QApplication::applicationDirPath());
-    delete rootItem;
+   delete rootItem;
 }
 
 #include <QFont>
@@ -30,27 +33,26 @@ QVariant TreeModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
         return QVariant();
+    int column=index.column();
+    if(2<=column) return QVariant();
 
     TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
     switch(role)
     {
-    case Qt::DisplayRole: return item->ColumnData(index.column());
+    default: break;
+    case Qt::DisplayRole: return item->Columns.at(index.column());
     case Qt::WhatsThisRole:
         {
-            switch(item->whatsThis())
+            switch(item->WhatIsThis())
             {
-            //default:
-            case Boot::Root: return QString("Root");
-            case Boot::Storage: return QString("Storage");
-            case Boot::Device: return QString("Device");
-            case Boot::File: return QString("File");
+            default: break;
+            case WT_ROOT: return QString(WTS_ROOT);
+            case WT_STORAGE: return QString(WTS_STORAGE);
+            case WT_SOFT: return QString(WTS_SOFT);
+            case WT_FILE: return QString(WTS_FILE);
             }
         }
         break;
-    case Boot::WhatsThis_UserRole: return item->whatsThis();
-    case Boot::WhatsStorage_UserRole: return item->whatsStorage();
-    case Boot::WhatsSoft_UserRole: return item->whatsSoft();
-    default: return QVariant();
     }
 
     return QVariant();
@@ -64,30 +66,30 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
     return QAbstractItemModel::flags(index);
 }
 
-QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant TreeModel::headerData(int column, Qt::Orientation orientation, int role) const
 {
+    if(2<=column) return QVariant();
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
-        return rootItem->ColumnData(section);
-
+        return rootItem->Columns.at(column);
     return QVariant();
 }
 
 QModelIndex TreeModel::index(int row, int column, const QModelIndex &parent) const
 {
+    if(2<=column) return QModelIndex();
     if (!hasIndex(row, column, parent))
         return QModelIndex();
 
     TreeItem *parentItem;
+    if (false==parent.isValid())  parentItem = rootItem;
+    else                          parentItem = static_cast<TreeItem*>(parent.internalPointer());
+    if(nullptr==parentItem) return QModelIndex();
+    if(row>=parentItem->Rows.count()) return QModelIndex();
 
-    if (!parent.isValid())
-        parentItem = rootItem;
-    else
-        parentItem = static_cast<TreeItem*>(parent.internalPointer());
+    TreeItem *childItem = parentItem->Rows[row];
+    if(nullptr==childItem) return QModelIndex();
 
-    TreeItem *childItem = parentItem->Row(row);
-    if (childItem)
-        return createIndex(row, column, childItem);
-    return QModelIndex();
+    return createIndex(row, column, childItem);
 }
 
 QModelIndex TreeModel::parent(const QModelIndex &index) const
@@ -107,22 +109,75 @@ QModelIndex TreeModel::parent(const QModelIndex &index) const
 int TreeModel::rowCount(const QModelIndex &parent) const
 {
     TreeItem *parentItem;
-    if (parent.column() > 0)
+    if(parent.column()>0)
         return 0;
 
-    if (!parent.isValid())
-        parentItem = rootItem;
-    else
-        parentItem = static_cast<TreeItem*>(parent.internalPointer());
+    if (!parent.isValid()) parentItem = rootItem;
+    else                   parentItem = static_cast<TreeItem*>(parent.internalPointer());
 
-    return parentItem->RowCount();
+    return parentItem->Rows.count();
 }
 
 int TreeModel::columnCount(const QModelIndex &parent) const
 {
-    if (parent.isValid())
-        return static_cast<TreeItem*>(parent.internalPointer())->ColumnCount();
-    return rootItem->ColumnCount();
+    if (false==parent.isValid()) return rootItem->Columns.count();
+    return static_cast<TreeItem*>(parent.internalPointer())->Columns.count();
+}
+
+bool TreeModel::isSoftValid(int soft_type) const
+{
+    switch(soft_type)
+    {
+    default: return false;
+    case SFT_KSUWORK:
+    case SFT_KSUBOOT:
+    case SFT_KI:
+    case SFT_SYS: break;
+    }
+    return true;
+}
+
+bool TreeModel::isStorageValid(int storage_type) const
+{
+    switch(storage_type)
+    {
+    default: return false;
+    case STT_KSU:
+    case STT_USB: break;
+    }
+    return true;
+}
+
+void TreeModel::loadSoft(TreeItem &storage_item, int type, const QString &path, const QStringList &filt)
+{
+    if(WT_STORAGE!=storage_item.WhatIsThis()) return;
+    if(false==isSoftValid(type)) return;
+
+    TreeItem *soft_item=new TreeItem(WT_SOFT, &storage_item);
+    if(nullptr==soft_item) return;
+    soft_item->Columns.append(this->Soft2String(type));
+    soft_item->Columns.append("");
+    soft_item->ExData.insert(DK_PATH, path);
+    soft_item->ExData.insert(DK_FILT, filt);
+
+    QDir dir(path);
+    if(false==dir.exists()) return;
+    if(true==dir.isEmpty()) return;
+
+    QFileInfoList file_list=dir.entryInfoList(filt);
+    for(int i=0; i<file_list.count(); ++i)
+    {
+        TreeItem *file_item=new TreeItem(WT_FILE, soft_item);
+        if(nullptr==file_item) return;
+        file_item->Columns.append(file_list.at(i).fileName());
+        QDateTime dt=file_list.at(i).created();//birthTime();
+        file_item->Columns.append(dt.toString("yy/MM/dd hh:mm"));
+    }
+}
+
+void TreeModel::loadContent(const QString &path, const QStringList &ksu_filt, const QStringList &ki_filt)
+{
+
 }
 
 //TreeItem * TreeModel::loadDeviceContent(Boot::WhatsSoft soft, TreeItem &storage_row, QDir device_dir, QStringList filters)
@@ -218,29 +273,25 @@ int TreeModel::columnCount(const QModelIndex &parent) const
 //    }
 //}
 
-QString TreeModel::Soft2String(int soft_type)
+QString TreeModel::Soft2String(int soft_type) const
 {
     switch(soft_type)
     {
-    //default:
-    case Boot::OtherSoft: return QString("");
-    case Boot::WorkKSU  : return QString(TU("Рабочее ПО для блока КСУ"));
-    case Boot::LoaderKSU: return QString(TU("ПО загрузчика блока КСУ"));
-    case Boot::SysKSU   : return QString(TU("Системное ПО блока КСУ"));
-    case Boot::KI       : return QString(TU("Рабочее ПО блока КИ"));
-    case Boot::KPT      : return QString(TU("Рабочее ПО блока КПТ"));
+    case SFT_KSUWORK: return QString(TU("Рабочее ПО для блока КСУ"));
+    case SFT_KSUBOOT: return QString(TU("ПО загрузчика блока КСУ"));
+    case SFT_SYS: return QString(TU("Системное ПО блока КСУ"));
+    case SFT_KI: return QString(TU("Рабочее ПО блока КИ"));
     }
     return QString("");
 }
 
-QString TreeModel::Storage2String(Boot::WhatsStorage storage)
+QString TreeModel::Storage2String(int storage_type) const
 {
-    switch(storage)
+    switch(storage_type)
     {
-    //default:
-    case Boot::OtherSrorage: return QString("");
-    case Boot::KsuStorage  : return QString(TU("Носитель: блок КСУ"));
-    case Boot::UsbStorage  : return QString(TU("Носитель: USB-flash накопитель"));
+    default: break;
+    case STT_KSU: return QString(TU("Носитель: блок КСУ"));
+    case STT_USB: return QString(TU("Носитель: USB-flash накопитель"));
     }
     return QString("");
 }
