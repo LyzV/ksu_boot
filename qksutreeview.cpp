@@ -1,7 +1,7 @@
 #include "qksutreeview.h"
-#include "bootnamespase.h"
+#include "treemodel.h"
 
-#define TU(s) s
+#define TU(s) tr(s)
 
 QKsuTreeView::QKsuTreeView(QWidget *parent):
     QTreeView(parent),
@@ -37,30 +37,26 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                 }
                 else
                 {
-                    int whats=this->model()->data(index, Boot::WhatsThis_UserRole).toInt();
-                    switch(whats)
+                    QString whats=this->model()->data(index, Qt::WhatsThisRole).toString();
+                    if(0==whats.compare(TreeModel::sROOT))
                     {
-                    default:
-                    case (int)Boot::Root: QTreeView::keyPressEvent(event); break;
-                    case (int)Boot::Storage:
-                        {
-                            if(this->isExpanded(index)) this->collapse(index);
-                            else                        this->expand  (index);
-                        }
-                        break;
-                    case (int)Boot::Device:
-                        {
-                            if(this->isExpanded(index)) this->collapse(index);
-                            else                        this->expand  (index);
-                        }
-                        break;
-                    case (int)Boot::File:
-                        {
-                            QString file_name(TU("Прошивка: "));
-                            file_name+=this->model()->data(index, Qt::DisplayRole).toString();
-                            CtrlForm.Exec(file_name);
-                        }
-                        break;
+                        QTreeView::keyPressEvent(event);
+                    }
+                    else if(0==whats.compare(TreeModel::sSTORAGE))
+                    {
+                        if(this->isExpanded(index)) this->collapse(index);
+                        else                        this->expand  (index);
+                    }
+                    else if(0==whats.compare(TreeModel::sSOFT))
+                    {
+                        if(this->isExpanded(index)) this->collapse(index);
+                        else                        this->expand  (index);
+                    }
+                    else if(0==whats.compare(TreeModel::sFILE))
+                    {
+                        QString file_name(TU("РџСЂРѕС€РёРІРєР°: "));
+                        file_name+=this->model()->data(index, Qt::DisplayRole).toString();
+                        CtrlForm.Exec(file_name);
                     }
                 }
             }

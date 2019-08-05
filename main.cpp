@@ -8,6 +8,12 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     TreeModel model;
+    int err;
+    if(false==model.Create(err))
+    {
+        a.exit(1);
+        return 1;
+    }
     QKsuTreeView view;
     view.setModel(&model);
     view.setAutoScroll(true);

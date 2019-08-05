@@ -29,13 +29,17 @@ SOURCES += \
         treeitem.cpp \
         treemodel.cpp \
     qksutreeview.cpp \
-    qctrlform.cpp
+    qctrlform.cpp \
+    qusbnotifier.cpp \
+    task.cpp
 
 HEADERS += \
         treeitem.h \
         treemodel.h \
     qksutreeview.h \
-    qctrlform.h
+    qctrlform.h \
+    qusbnotifier.h \
+    task.hpp
 
 FORMS += \
     ctrl_form.ui
