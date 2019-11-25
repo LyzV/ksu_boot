@@ -6,15 +6,15 @@
 #include <QDateTime>
 #include <QRegExp>
 
-#define TU(s) tr(s)
+#define TU(s) codec->toUnicode(s) //tr(s)
 
 const QString TreeModel::sROOT(tr("Root"));
 const QString TreeModel::sSTORAGE(tr("Storage"));
 const QString TreeModel::sSOFT(tr("Soft"));
 const QString TreeModel::sFILE(tr("File"));
 
-#define HEADER1 TU("ПРОШИВКА")
-#define HEADER2 TU("ДАТА")
+#define HEADER1 TU("��������")
+#define HEADER2 TU("����")
 
 TreeModel::TreeModel(QObject *parent)
     : QAbstractItemModel(parent)
@@ -189,7 +189,8 @@ void TreeModel::loadSoft(TreeItem &storage_item, int type, const QString &path, 
         TreeItem *file_item=new TreeItem(WT_FILE, soft_item);
         if(nullptr==file_item) return;
         file_item->Columns.append(file_list.at(i).fileName());
-        QDateTime dt=file_list.at(i).created();//birthTime();
+        QDateTime dt=file_list.at(i).created();
+        //QDateTime dt=file_list.at(i).birthTime();
         file_item->Columns.append(dt.toString("yy/MM/dd hh:mm"));
     }
 }
@@ -224,10 +225,10 @@ QString TreeModel::Soft2String(int soft_type) const
 {
     switch(soft_type)
     {
-    case SFT_KSUWORK: return QString(TU("Рабочее ПО блока КСУ:"));
+    case SFT_KSUWORK: return QString(TU("� абочее ПО блока КСУ:"));
     case SFT_KSUBOOT: return QString(TU("ПО загрузчика блока КСУ:"));
     case SFT_SYS: return QString(TU("Системное ПО:"));
-    case SFT_KI: return QString(TU("Рабочее ПО блока КИ:"));
+    case SFT_KI: return QString(TU("� абочее ПО блока КИ:"));
     }
     return QString("");
 }

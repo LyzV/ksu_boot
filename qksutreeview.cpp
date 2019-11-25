@@ -1,7 +1,7 @@
 #include "qksutreeview.h"
 #include "treemodel.h"
 
-#define TU(s) tr(s)
+#define TU(s) codec->toUnicode(s) //tr(s)
 
 QKsuTreeView::QKsuTreeView(QWidget *parent):
     QTreeView(parent),
@@ -54,7 +54,7 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                     }
                     else if(0==whats.compare(TreeModel::sFILE))
                     {
-                        QString file_name(TU("Ð ÑŸÐ¡Ð‚Ð Ñ•Ð¡â‚¬Ð Ñ‘Ð Ð†Ð Ñ”Ð Â°: "));
+                        QString file_name(TU("Òóò íåïîíÿòíàÿ ñòðîêà: "));
                         file_name+=this->model()->data(index, Qt::DisplayRole).toString();
                         CtrlForm.Exec(file_name);
                     }

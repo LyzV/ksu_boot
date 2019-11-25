@@ -20,8 +20,14 @@ int main(int argc, char *argv[])
     view.setColumnWidth(0, 420);
     view.setFont(QFont("", 15));
     view.setItemsExpandable(true);
-    view.setWindowTitle(QObject::tr("Simple Tree Model"));
+    view.setWindowTitle(QObject::tr("Simple Tree Mo"
+                                    "del"));
     view.setGeometry(QRect(0, 0, 640, 480));
     view.show();
     return a.exec();
+
+
+
 }
+
+
