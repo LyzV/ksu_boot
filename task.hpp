@@ -5,37 +5,35 @@
 #include <QSemaphore>
 #include <QMutex>
 #include <QTimer>
+#include <QString>
 
-//РљРѕРґР° РѕС€РёР±РѕРє РїСЂРё СЃРѕР·РґР°РЅРёРё Р·Р°РґР°С‡
+//Кода ошибок при создании задач
 #define TASK_NO_ERR         0
-#define TASK_MEMORY_ERR     1//РќРµС…РІР°С‚РєР° СЃРѕР±РѕРґРЅРѕР№ РїР°РјСЏС‚Рё
-#define TASK_RECREATE_ERR   2//РџРѕРІС‚РѕСЂРЅРѕ СЃРѕР·РґР°С‘С‚СЃСЏ СЂР°Р±РѕС‡РёР№
-#define TASK_WORKPTR_ERR    3//РќСѓР»РµРІРѕР№ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЂР°Р±РѕС‡РµРіРѕ
-#define TASK_CONNECT_ERR    4//РќРµ СѓРґР°Р»РѕСЃСЊ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ QObject::connetion
-#define TASK_CAST_ERR       5//РћС€РёР±РєР° РїСЂРёРІРµРґРµРЅРёСЏ С‚РёРїР°
+#define TASK_MEMORY_ERR     1//Нехватка сободной памяти
+#define TASK_NULLPTR_ERR    2//Нулевой указатель
+#define TASK_RECREATE_ERR   3//Повторно создаётся рабочий
+#define TASK_WORKPTR_ERR    4//Нулевой указатель на рабочего
+#define TASK_CONNECT_ERR    5//Не удалось установить QObject::connection
+#define TASK_CAST_ERR       6//Ошибка приведения типа
+#define TASK_OPENFILE_ERR   7//Не могу открыть файл
+#define TASK_READFILE_ERR   8//Не могу прочесть файл
+#define TASK_RESOURCE_ERR   9//Аппаратный ресурс отсутствует
 
-#define TASK_OTHER_ERR      100//РќР°С‡РёРЅР°СЏ СЃ СЌС‚РѕРіРѕ РЅРѕРјРµСЂР° СЃРїРµС†РёС„РёС‡РµСЃРєРёРµ РѕС€РёР±РєРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р·Р°РґР°С‡
+#define TASK_OTHER_ERR(n)   (100+(n))
 
-
-class CTask: public QThread
-{
-    Q_OBJECT
-
-    void (*task)(void *pdata);
-    void *pdata;
-    void run(void) override
-    {
-        if(NULL!=task)
-            (*task)(pdata);
-    }
-public:
-    CTask(void (*task)(void *), void *pdata);
-    void Start(void *pdata, Priority prio);
-};
-
+#define TASK_SND_ERR        TASK_OTHER_ERR(1)//Ошибка инициализации sound
+#define TASK_GPIO_ERR       TASK_OTHER_ERR(2)//Ошибка инициализации GPIO
+#define TASK_ADC_ERR        TASK_OTHER_ERR(3)//Ошибка инициализации АЦП
+#define TASK_CLOCK_ERR      TASK_OTHER_ERR(4)//Ошибка инициализации RTC
+#define TASK_MEASJRNL_ERR   TASK_OTHER_ERR(5)//Ошибка создания журнала измерений
+#define TASK_GDIJRNL_ERR    TASK_OTHER_ERR(6)//Ошибка создания журнала ГДИ
+#define TASK_MAP_ERR        TASK_OTHER_ERR(7)//Ошибка создания карт памяти
+#define TASK_ZNK_ERR        TASK_OTHER_ERR(8)//Ошибка создания модуля ZNK
+#define TASK_MEI_ERR        TASK_OTHER_ERR(9)//Ошибка создания модуля MEI
+#define TASK_ETHER_ERR      TASK_OTHER_ERR(10)//Ошибка создания Ethernet сервера
 
 /*************************************************************************
- * РљР›РђРЎРЎ Р—РђР”РђР§Р, РЈ РљРћРўРћР РћР™ РњРћР–РќРћ РџР•Р Р•РћРџР Р•Р”Р•Р›РРўР¬ Р¤РЈРќРљР¦Р® Р РђР‘РћРўР« (Work)
+ * КЛАСС ЗАДАЧИ, У КОТОРОЙ МОЖНО ПЕРЕОПРЕДЕЛИТЬ ФУНКЦЮ РАБОТЫ (Work)
 **************************************************************************/
 class Controller;
 class IWorker: public QObject
@@ -67,7 +65,7 @@ protected:
     }
 
 public:
-    IWorker(void): ExitFlag(false), Data(nullptr){}
+    IWorker(QString name=""): ExitFlag(false), Data(nullptr){ setObjectName(name); }
     virtual ~IWorker(void){}
 
     bool getResult(int &err)
@@ -130,6 +128,7 @@ public:
         if(nullptr==Worker){ err=TASK_WORKPTR_ERR ; return false; }
         emit InitSignal(data);
         WorkerThread.start(prio);
+        WorkerThread.setObjectName(Worker->objectName());
         return Worker->getResult(err);
     }
     virtual void WorkerStop(void)
@@ -148,7 +147,7 @@ signals:
 };
 
 /*************************************************************************
- * РљР›РђРЎРЎ Р—РђР”РђР§Р, РљРћРўРћР РђРЇ Р Р•Р“РЈР›РЇР РќРћ Р’Р«Р—Р«Р’РђР•РўРЎРЇ РЎ Р—РђР”РђРќРќР«Рњ РџР•Р РРћР”РћРњ
+ * КЛАСС ЗАДАЧИ, КОТОРАЯ РЕГУЛЯРНО ВЫЗЫВАЕТСЯ С ЗАДАННЫМ ПЕРИОДОМ
 **************************************************************************/
 class PWorker: public IWorker
 {
@@ -160,7 +159,7 @@ class PWorker: public IWorker
 private slots:
     void OnTimerSlot(void){ OnTimer(); }
 public:
-    PWorker(int period=100){ this->period=period; }
+    PWorker(QString name, int period=100): IWorker(name) { this->period=period; }
     virtual bool Init(void *pdata, int &err)
     {
         bool con_result;
@@ -177,14 +176,14 @@ public:
     virtual void OnTimer(void){}
 };
 
-//Р¤СѓРЅРєС†РёСЏ РґР»СЏ Р·Р°РїСѓСЃРєР° РїРµСЂРёРѕРґРёС‡РµСЃРєРѕР№ Р·Р°РґР°С‡Рё PWorker
+//Функция для запуска периодической задачи PWorker
 extern
 bool StartPeriodicallyTask(
-                            QObject *parent         ,//Р РѕРґРёС‚РµР»СЊ
-                            PWorker *worker         ,//РџРµСЂРёРѕРґ Р·Р°РґР°С‡Рё
-                            QThread::Priority prio  ,//РџСЂРёРѕСЂРёС‚РµС‚ Р·Р°РґР°С‡Рё
-                            void *pdata             ,//Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ Р·Р°РґР°С‡Рё
-                            int &err                 //РљРѕРґ РѕС€РёР±РєРё РїСЂРё РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р·Р°РґР°С‡Рё
+                            QObject *parent         ,//Родитель
+                            PWorker *worker         ,//Период задачи
+                            QThread::Priority prio  ,//Приоритет задачи
+                            void *pdata             ,//Дополнительные данные задачи
+                            int &err                 //Код ошибки при инициализации задачи
                           );
 
 

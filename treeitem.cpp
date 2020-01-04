@@ -9,6 +9,19 @@ TreeItem::TreeItem(int whats, TreeItem *parent)
     number=Parent->Rows.count()-1;
 }
 
+TreeItem::~TreeItem()
+{
+    TreeItem *item;
+    while(Rows.count())
+    {
+        item=Rows.at(0);
+        Rows.remove(0);
+        if(nullptr!=item)
+            delete item;
+    }
+    qDeleteAll(Rows);
+}
+
 void TreeItem::createStorage(int type, const QString &path)
 {
     if(WT_STORAGE!=whats) return;

@@ -35,7 +35,8 @@ SOURCES += \
     qksutreeview.cpp \
     qctrlform.cpp \
     qusbnotifier.cpp \
-    task.cpp
+    task.cpp \
+    bash_cmd.cpp
 
 HEADERS += \
         treeitem.h \
@@ -43,7 +44,9 @@ HEADERS += \
     qksutreeview.h \
     qctrlform.h \
     qusbnotifier.h \
-    task.hpp
+    task.hpp \
+    bash_cmd.h \
+    vtypes.h
 
 FORMS += \
     ctrl_form.ui

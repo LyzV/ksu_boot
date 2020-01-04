@@ -54,9 +54,14 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                     }
                     else if(0==whats.compare(TreeModel::sFILE))
                     {
-                        QString file_name(TU("Тут непонятная строка: "));
-                        file_name+=this->model()->data(index, Qt::DisplayRole).toString();
-                        CtrlForm.Exec(file_name);
+                        int storageType;
+                        int softType;
+                        QString fileName;
+                        QString filePath;
+
+                        const TreeModel *treeModel=reinterpret_cast<const TreeModel *>(index.model());
+                        if(treeModel->getFile(index, storageType, softType, filePath, fileName))
+                            CtrlForm.Exec(storageType, softType, filePath, fileName);
                     }
                 }
             }

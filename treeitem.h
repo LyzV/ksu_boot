@@ -13,16 +13,7 @@
 #define WT_SOFT     2
 #define WT_FILE     3
 
-#define ST_KSU  0
-#define ST_USB  1
-
-#define SF_KSUWORK  0
-#define SF_KSUBOOT  1
-#define SF_KI       2
-#define SF_KPT      3
-#define SF_SYS      4
-
-//Data Key
+//Data Key of Hash Table
 #define DK_TYPE   0
 #define DK_PATH   1
 #define DK_NAME   2
@@ -48,7 +39,7 @@ class TreeItem
 
 public:
     explicit TreeItem(int whats=WT_ROOT, TreeItem *parent=nullptr);
-    ~TreeItem(){ qDeleteAll(Rows); }
+    ~TreeItem();
 
     int WhatIsThis() const { return whats; }
     TreeItem *parentItem() const { return Parent; }

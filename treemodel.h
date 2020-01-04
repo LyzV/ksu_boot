@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QAbstractItemModel>
 #include <QDir>
+#include <QFile>
 #include <QStringList>
 #include <QTextCodec>
 #include "treeitem.h"
@@ -13,7 +14,8 @@ class TreeModel : public QAbstractItemModel
 {
     Q_OBJECT
 
-    QUsbNotifier UsbNotifier;
+    QUsbWorker *Worker=nullptr;
+
 public:
     explicit TreeModel(QObject *parent = nullptr);
     ~TreeModel() override;
@@ -34,6 +36,13 @@ static const QString sFILE;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
+    bool getFile(const QModelIndex &index,
+                 int &storageType,
+                 int &softType,
+                 QString &filePath,
+                 QString &fileName
+                 ) const;
+
 private:
     QString Soft2String(int soft_type) const;
     QString Storage2String(int storage_type) const;
@@ -45,12 +54,16 @@ private:
                      const QStringList &ksuwork_filt,
                      const QStringList &ksuboot_filt,
                      const QStringList &ki_filt);
+    void removeUsbContent(void);
 
     TreeItem *rootItem;
     QTextCodec *codec;//Translate from cp1251 to utf8
     QString mount;
     bool mount_flag;
     QStringList KsuWorkFilter, KsuBootFilter, KiFilter;
+
+private slots:
+    void MountSlot(const QString &mpoint, const QString &device, bool mount_flag);
 };
 
 #endif // TREEMODEL_H

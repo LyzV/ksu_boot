@@ -1,9 +1,12 @@
 #include "qctrlform.h"
 #include "ui_ctrl_form.h"
+#include "bash_cmd.h"
 #include <QThread>
+#include <QFile>
 #include <QMessageBox>
+#include "treeitem.h"
 
-#define TU(s) s
+#define TU(s) codec->toUnicode((s))
 
 QCtrlForm::QCtrlForm(QWidget *parent) :
     QDialog(parent),
@@ -25,6 +28,8 @@ QCtrlForm::QCtrlForm(QWidget *parent) :
     Q_ASSERT(con);
     con=QObject::connect(this->ui->progButton, SIGNAL(pressed()), this, SLOT(progSlot()));
     Q_ASSERT(con);
+    con=QObject::connect(this->ui->delButton, SIGNAL(pressed()), this, SLOT(deleteSlot());
+    Q_ASSERT(con);
 }
 
 QCtrlForm::~QCtrlForm()
@@ -32,9 +37,15 @@ QCtrlForm::~QCtrlForm()
     delete ui;
 }
 
-int QCtrlForm::Exec(const QString &file)
+int QCtrlForm::Exec(int &storageType, int &softType, QString &filePath, QString &fileName)
 {
-    ui->fileLabel->setText(file);
+    this->storageType=storageType;
+    this->softType=softType;
+    this->filePath=filePath;
+    this->fileName=fileName;
+
+
+    ui->fileLabel->setText(TU("¬€¡–¿Õ ‘¿…À: ")+this->fileName);
     ui->errorLabel->hide();
     ui->doLabel->hide();
     ui->doProgBar->hide();
@@ -42,23 +53,84 @@ int QCtrlForm::Exec(const QString &file)
     return exec();
 }
 
+bool QCtrlForm::copySoft(const QString &from, const QString &to)
+{
+    QFile fromFile(from);
+    if(false==fromFile.exists())
+        return false;
+    QFile toFile(to);
+    if(true==toFile.exists())
+    {
+        if(false==toFile.remove())
+            return false;
+    }
+    if(false==fromFile.copy(to))
+        return false;
+
+    return true;
+}
+
 void QCtrlForm::progSlot()
 {
-    ui->doLabel->setText(TU("–†—ü–°–Ç–†—ï–†—ñ–°–Ç–†¬∞–†—ò–†—ò–†—ë–°–Ç–°—ì–°–ã..."));
-    ui->doProgBar->setValue(0);
+    ui->errorLabel->hide();
+    ui->doLabel->setText(TU("œ–Œ√–¿ÃÃ»–”ﬁ..."));
     ui->doLabel->show();
+    ui->doProgBar->setValue(0);
     ui->doProgBar->show();
     QApplication::processEvents();
-    for(int i=0; i<100; ++i)
+    if(STT_USB==storageType)
     {
-        ui->doProgBar->setValue(i);
-        for(int j=0; j<10; ++j)
+        switch(softType)
         {
-            QApplication::processEvents();
-            QThread::msleep(10);
+        default:
+        case SFT_KSUWORK:
+            {
+                ui->doProgBar->setValue(10);
+                QApplication::processEvents();
+                QString fullFileName=filePath+"/"+fileName;
+                if(true==copySoft(fullFileName, "/home/root/ksu"))
+                {
+                    QBashCmd::set_file_execute_mode(fullFileName);
+                    QBashCmd::flush_storage();
+                    ui->doLabel->setText(TU("”—œ≈ÿÕŒ «¿œ–Œ√–¿ÃÃ»–Œ¬¿À!"));
+                    ui->doProgBar->setValue(100);
+                }
+                else
+                {
+                    ui->errorLabel->show();
+                }
+                QApplication::processEvents();
+            }
+            break;
+        case SFT_KSUBOOT:
+        case SFT_KI: break;
         }
     }
-    ui->doProgBar->setValue(ui->doProgBar->maximum());
-    ui->errorLabel->show();
-    ui->doLabel->setText(TU("–†—ô–†—ï–†–Ö–°‚Äö–°–Ç–†—ï–†¬ª–†¬ª–†¬µ–°–Ç –°—ì–°–É–†—ó–†¬µ–°‚Ç¨–†–Ö–†—ï –†¬∑–†¬∞–†—ó–°–Ç–†—ï–†—ñ–°–Ç–†¬∞–†—ò–†—ò–†—ë–°–Ç–†—ï–†–Ü–†¬∞–†–Ö!"));
+    else//STT_KSU
+    {
+    }
+    ui->exitButton->setFocus();
+
+//    ui->doLabel->setText(TU("œ–Œ√–¿ÃÃ»–”ﬁ..."));
+//    ui->doProgBar->setValue(0);
+//    ui->doLabel->show();
+//    ui->doProgBar->show();
+//    QApplication::processEvents();
+//    for(int i=0; i<100; ++i)
+//    {
+//        ui->doProgBar->setValue(i);
+//        for(int j=0; j<10; ++j)
+//        {
+//            QApplication::processEvents();
+//            QThread::msleep(10);
+//        }
+//    }
+//    ui->doProgBar->setValue(ui->doProgBar->maximum());
+//    ui->errorLabel->show();
+    //    ui->doLabel->setText(TU("» «ƒ≈—‹  ¿ Œ…-“Œ “≈ —“..."));
+}
+
+void QCtrlForm::deleteSlot()
+{
+
 }

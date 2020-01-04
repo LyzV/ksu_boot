@@ -1,9 +1,53 @@
 #include "qusbnotifier.h"
 #include <QFile>
+#include <QDir>
+#include <QStorageInfo>
 #include <QByteArray>
 #include <poll.h>
 #include <QDebug>
 
+
+void QUsbWorker::addPoint(const QString mpoint, const QString device)
+{
+    MountPoints .append(mpoint);
+    MountDevices.append(device);
+}
+void QUsbWorker::removePoint(int pos)
+{
+    if(pos>=MountPoints .count()) return;
+    if(pos>=MountDevices.count()) return;
+    MountPoints .removeAt(pos);
+    MountDevices.removeAt(pos);
+}
+
+bool QUsbWorker::CheckStorage(const QString &mpoint, const QString &device)
+{
+    QDir dir(mpoint);
+    if(!dir.isAbsolute())
+        return false;
+    if(!dir.exists())
+        return false;
+    QFile dev_file(device);
+    if(!dev_file.exists())
+        return false;
+
+    QList<QStorageInfo> list=QStorageInfo::mountedVolumes();
+    for(int i=0; i<list.count(); ++i)
+    {
+        QStorageInfo sinfo=list.at(i);
+        if(
+           (sinfo.isValid()) &&
+           (sinfo.device()==device) &&
+           (sinfo.rootPath()==mpoint) &&
+           (sinfo.isReadOnly()==false) &&
+           (sinfo.fileSystemType()=="vfat")
+          )
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 void QUsbWorker::CheckMount()
 {
@@ -15,6 +59,7 @@ void QUsbWorker::CheckMount()
     QString text(bytes);
     QStringList lines=text.split("\n");
     QStringList mpoints;
+    QStringList devices;
     for(int i=0; i<lines.count(); ++i)
     {
         QStringList fields=lines.at(i).split(" ");
@@ -22,41 +67,53 @@ void QUsbWorker::CheckMount()
         QString mpoint=fields.at(1);
         if(true==exp.exactMatch(mpoint))
         {
+            QString device=fields.at(0);
             mpoints.append(mpoint);
+            devices.append(device);
         }
     }
     //check mount
     for(int i=0; i<mpoints.count(); ++i)
     {
-        if(false==Find(mpoints.at(i), MountPoints))
+        if(
+           (false==Find(mpoints.at(i), devices.at(i), MountPoints, MountDevices))&&
+           (true ==CheckStorage(mpoints.at(i), devices.at(i)))
+          )
         {
-            MountPoints.append(mpoints.at(i));
-            emit MountSignal(mpoints.at(i), true);
+            addPoint(mpoints.at(i), devices.at(i));
+            emit MountSignal(mpoints.at(i), devices.at(i), true);
         }
     }
     //check umount
+_again:
     for(int i=0; i<MountPoints.count(); ++i)
     {
-        if(false==Find(MountPoints.at(i), mpoints))
+        if(false==Find(MountPoints.at(i), MountDevices.at(i), mpoints, devices))
         {
-            emit MountSignal(MountPoints.at(i), false);
-            MountPoints.removeAt(i);
-            --i;
+            emit MountSignal(MountPoints.at(i), MountDevices.at(i), false);
+            removePoint(i);
+            goto _again;
         }
     }
 }
 
-bool QUsbWorker::Find(const QString &s, const QStringList &list) const
+
+
+bool QUsbWorker::Find(const QString     &mp     , const QString     &dev,
+                      const QStringList &mpoints, const QStringList &devices) const
 {
-    for(int i=0; i<list.count(); ++i)
+    for(int i=0; i<mpoints.count(); ++i)
     {
-        if(0==s.compare(list.at(i)))
+        if(
+           (0==mp .compare(mpoints.at(i))) &&
+           (0==dev.compare(devices.at(i)))
+          )
             return true;
     }
     return false;
 }
 
-QUsbWorker::QUsbWorker():
+QUsbWorker::QUsbWorker(void):
     file("/proc/mounts")
 {
 }
@@ -72,7 +129,7 @@ bool QUsbWorker::Init(void *data, int &err)
     Q_UNUSED(data);
     if(false==file.open(QFile::ReadOnly))
     {
-        err=USBN_OPEN_FILE;
+        err=TASK_OPENFILE_ERR;
         return false;
     }
     CheckMount();
@@ -102,49 +159,5 @@ void QUsbWorker::Work()
     }
     if(true==file.isOpen())
         file.close();
-}
-
-
-
-void QUsbNotifier::MountSlot(const QString &mpoint, bool mount_flag)
-{
-    emit MountSignal(mpoint, mount_flag);
-    if(true==mount_flag) qDebug() << "mount " << mpoint;
-    else                 qDebug() << "unmount " << mpoint;
-}
-
-QUsbNotifier::QUsbNotifier()
-{
-
-}
-
-QUsbNotifier::~QUsbNotifier()
-{
-
-}
-
-bool QUsbNotifier::Start(int &err)
-{
-    Worker=new QUsbWorker;
-    if(nullptr==Worker){ err=TASK_MEMORY_ERR; return false; }
-    Controller *ctrl=new Controller(this);
-    if(nullptr==ctrl)
-    {
-        delete Worker; Worker=nullptr;
-        err=TASK_MEMORY_ERR;
-        return false;
-    }
-    bool ret;
-    ret=connect(Worker, SIGNAL(MountSignal(QString,bool)), this, SLOT(MountSlot(QString,bool)));
-    if(false==ret)
-    {
-        delete ctrl; ctrl=nullptr;
-        delete Worker; Worker=nullptr;
-        err=TASK_CONNECT_ERR;
-        return false;
-    }
-    if(false==ctrl->Create(Worker, err)){ return false; }
-    return ctrl->WorkerStart(QThread::NormalPriority, nullptr, err);
-
 }
 

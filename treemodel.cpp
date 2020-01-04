@@ -41,12 +41,39 @@ TreeModel::TreeModel(QObject *parent)
 
 TreeModel::~TreeModel()
 {
-    delete rootItem;
+    if(nullptr==rootItem) delete rootItem;
+    if(nullptr==Worker) delete Worker;
 }
 
 bool TreeModel::Create(int &err)
 {
-    return UsbNotifier.Start(err);
+    QUsbWorker *Worker=new QUsbWorker;
+    if(nullptr==Worker)
+    {
+        err=TASK_MEMORY_ERR;
+        return false;
+    }
+    Controller *ctrl=new Controller(this);
+    if(nullptr==ctrl)
+    {
+        delete Worker;
+        Worker=nullptr;
+        err=TASK_MEMORY_ERR;
+        return false;
+    }
+    if(false==ctrl->Create(Worker, err))
+    {
+        delete Worker;
+        Worker=nullptr;
+        return false;
+    }
+    bool ret=ctrl->WorkerStart(QThread::NormalPriority, nullptr, err);
+    if(true==ret)
+    {
+        connect(Worker, SIGNAL(MountSignal(QString,QString,bool)),
+                this  , SLOT  (MountSlot  (QString,QString,bool)));
+    }
+    return ret;
 }
 
 QVariant TreeModel::data(const QModelIndex &index, int role) const
@@ -144,6 +171,30 @@ int TreeModel::columnCount(const QModelIndex &parent) const
     return static_cast<TreeItem*>(parent.internalPointer())->Columns.count();
 }
 
+bool TreeModel::getFile(const QModelIndex &index, int &storageType, int &softType, QString &filePath, QString &fileName) const
+{
+    if(!index.isValid())
+        return false;
+
+    const TreeItem *fileItem=reinterpret_cast<const TreeItem *>(index.internalPointer());
+    if(nullptr==fileItem) return false;
+    if(WT_FILE!=fileItem->WhatIsThis()) return false;
+    fileName=fileItem->Columns.at(0);
+
+    const TreeItem *softItem=fileItem->parentItem();
+    if(nullptr==softItem) return false;
+    if(WT_SOFT!=softItem->WhatIsThis()) return false;
+    softType=softItem->ExData[DK_TYPE].toInt();
+    filePath=softItem->ExData[DK_PATH].toString();
+
+    const TreeItem *storageItem=softItem->parentItem();
+    if(nullptr==storageItem) return false;
+    if(WT_STORAGE!=storageItem->WhatIsThis()) return false;
+    storageType=storageItem->ExData[DK_TYPE].toInt();
+
+    return true;
+}
+
 bool TreeModel::isSoftValid(int soft_type) const
 {
     switch(soft_type)
@@ -200,6 +251,8 @@ void TreeModel::loadContent(const QString &path,
                             const QStringList &ksuboot_filt,
                             const QStringList &ki_filt)
 {
+    beginResetModel();
+
     TreeItem *storage_item=new TreeItem(WT_STORAGE, rootItem);
     if(nullptr==storage_item) return;
 
@@ -219,16 +272,52 @@ void TreeModel::loadContent(const QString &path,
     loadSoft(*storage_item, SFT_KSUWORK , full_path, ksuwork_filt);
     loadSoft(*storage_item, SFT_KSUBOOT , full_path, ksuboot_filt);
     loadSoft(*storage_item, SFT_KI      , full_path, ki_filt     );
+
+    endResetModel();
+}
+
+void TreeModel::removeUsbContent(void)
+{
+    if(2>rootItem->Rows.count()) return;
+    int row=rootItem->Rows.count()-1;
+    TreeItem *storage_item=rootItem->Rows.at(row);
+    if(nullptr!=storage_item)
+    {
+        if(Storage2String(STT_USB)!=storage_item->Columns[0])
+            return;
+    }
+
+    beginResetModel();
+    rootItem->Rows.remove(row);
+    delete storage_item;
+    endResetModel();
+}
+
+void TreeModel::MountSlot(const QString &mpoint, const QString &device, bool mount_flag)
+{
+    Q_UNUSED(device);
+
+    if(true==mount_flag)
+    {//mounted
+        loadContent(mpoint,
+                    KsuWorkFilter,
+                    KsuBootFilter,
+                    KiFilter);
+    }
+    else
+    {//unmounted
+        removeUsbContent();
+    }
 }
 
 QString TreeModel::Soft2String(int soft_type) const
 {
     switch(soft_type)
     {
-    case SFT_KSUWORK: return QString(TU("– –∞–±–æ—á–µ–µ –ü–û –±–ª–æ–∫–∞ –ö–°–£:"));
-    case SFT_KSUBOOT: return QString(TU("–ü–û –∑–∞–≥—Ä—É–∑—á–∏–∫–∞ –±–ª–æ–∫–∞ –ö–°–£:"));
-    case SFT_SYS: return QString(TU("–°–∏—Å—Ç–µ–º–Ω–æ–µ –ü–û:"));
-    case SFT_KI: return QString(TU("– –∞–±–æ—á–µ–µ –ü–û –±–ª–æ–∫–∞ –ö–ò:"));
+    case SFT_KSUWORK: return QString(TU("–¿¡Œ◊≈≈ œŒ ¡ÀŒ ¿  —”:"));
+    case SFT_KSUBOOT: return QString(TU("«¿√–”«◊»  ¡ÀŒ ¿  —”:"));
+    case SFT_SYS: return QString(TU("—»—“≈ÃÕŒ≈ œŒ ¡ÀŒ ¿  —”:"));
+    case SFT_KI: return QString(TU("–¿¡Œ◊≈≈ œŒ ¡ÀŒ ¿  »:"));
     }
     return QString("");
 }
@@ -238,8 +327,8 @@ QString TreeModel::Storage2String(int storage_type) const
     switch(storage_type)
     {
     default: break;
-    case STT_KSU: return QString(TU("–ë–ª–æ–∫ –ö–°–£:"));
-    case STT_USB: return QString(TU("USB-flash –Ω–∞–∫–æ–ø–∏—Ç–µ–ª—å:"));
+    case STT_KSU: return QString(TU("¡ÀŒ   —”:"));
+    case STT_USB: return QString(TU("USB-FLASH ÕŒ—»“≈À‹:"));
     }
     return QString("");
 }

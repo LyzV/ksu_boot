@@ -14,13 +14,22 @@ public:
     explicit QCtrlForm(QWidget *parent=nullptr);
     ~QCtrlForm();
 
-    int Exec(const QString &file);
+    int Exec(int &storageType, int &softType, QString &filePath, QString &fileName);
 
 private:
     Ui::CtrlForm *ui;
     QTextCodec *codec;
+    int storageType;
+    int softType;
+    QString fileName;
+    QString filePath;
+
+    bool copySoft(const QString &from, const QString &to);
+
+
 private slots:
     void progSlot(void);
+    void deleteSlot(void);
 };
 
 #endif // QCTRLFORM_H
