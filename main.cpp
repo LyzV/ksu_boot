@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QCoreApplication::setApplicationName("ksu_boot");
-    QCoreApplication::setApplicationVersion("1.0.0");
+    QCoreApplication::setApplicationVersion("1.0.2");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Second time boot KSU");
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     QEntryDialog entryDialog;
 
     QBashCmd::stop_getty();
-    QBashCmd::make_usb_auto_mount();
+    //QBashCmd::make_usb_auto_mount();
 
     int ret=entryDialog.exec();
     if(QDialog::Rejected==ret)

@@ -58,6 +58,7 @@ bool QBashCmd::make_usb_auto_mount(void)
         return false;
     QTextStream stream(&file);
     stream << text;
+    file.flush();
     file.close();
 
     //2) Reread rules: udevadm control --reload-rules
