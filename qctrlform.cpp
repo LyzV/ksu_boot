@@ -5,14 +5,16 @@
 #include <QFile>
 #include <QMessageBox>
 #include "treeitem.h"
+#include "qbootstrap.h"
 
 #define TU(s) codec->toUnicode((s))
 
-QCtrlForm::QCtrlForm(QWidget *parent) :
+QCtrlForm::QCtrlForm(const QString &workDirectory, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CtrlForm)
 {
     bool con;
+    this->workDirectory=workDirectory;
 
     codec=QTextCodec::codecForName("CP1251");
 
@@ -28,8 +30,8 @@ QCtrlForm::QCtrlForm(QWidget *parent) :
     Q_ASSERT(con);
     con=QObject::connect(this->ui->progButton, SIGNAL(pressed()), this, SLOT(progSlot()));
     Q_ASSERT(con);
-    con=QObject::connect(this->ui->delButton, SIGNAL(pressed()), this, SLOT(deleteSlot());
-    Q_ASSERT(con);
+    //con=QObject::connect(this->ui->delButton, SIGNAL(pressed()), this, SLOT(deleteSlot());
+    //Q_ASSERT(con);
 }
 
 QCtrlForm::~QCtrlForm()
@@ -87,11 +89,10 @@ void QCtrlForm::progSlot()
             {
                 ui->doProgBar->setValue(10);
                 QApplication::processEvents();
-                QString fullFileName=filePath+"/"+fileName;
-                if(true==copySoft(fullFileName, "/home/root/ksu"))
+                QStringList bootPathList;
+                bootPathList << workDirectory + "/ksu1" << workDirectory + "/ksu2";
+                if(true==QBootstrap::programSoft(bootPathList, filePath+"/"+fileName))
                 {
-                    QBashCmd::set_file_execute_mode(fullFileName);
-                    QBashCmd::flush_storage();
                     ui->doLabel->setText(TU("ÓÑÏÅØÍÎ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀË!"));
                     ui->doProgBar->setValue(100);
                 }
@@ -103,6 +104,23 @@ void QCtrlForm::progSlot()
             }
             break;
         case SFT_KSUBOOT:
+        {
+            ui->doProgBar->setValue(10);
+            QApplication::processEvents();
+            QStringList bootPathList;
+            bootPathList << workDirectory + "/ksu_boot1" << workDirectory + "/ksu_boot2";
+            if(true==QBootstrap::programSoft(bootPathList, filePath+"/"+fileName))
+            {
+                ui->doLabel->setText(TU("ÓÑÏÅØÍÎ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀË!"));
+                ui->doProgBar->setValue(100);
+            }
+            else
+            {
+                ui->errorLabel->show();
+            }
+            QApplication::processEvents();
+        }
+        break;
         case SFT_KI: break;
         }
     }

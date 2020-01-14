@@ -11,7 +11,7 @@ class QCtrlForm: protected QDialog
 {
     Q_OBJECT
 public:
-    explicit QCtrlForm(QWidget *parent=nullptr);
+    explicit QCtrlForm(const QString &workDirectory, QWidget *parent=nullptr);
     ~QCtrlForm();
 
     int Exec(int &storageType, int &softType, QString &filePath, QString &fileName);
@@ -23,6 +23,7 @@ private:
     int softType;
     QString fileName;
     QString filePath;
+    QString workDirectory;
 
     bool copySoft(const QString &from, const QString &to);
 

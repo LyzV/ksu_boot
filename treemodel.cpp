@@ -16,9 +16,10 @@ const QString TreeModel::sFILE(tr("File"));
 #define HEADER1 TU("ÏÐÎØÈÂÊÀ")
 #define HEADER2 TU("ÄÀÒÀ")
 
-TreeModel::TreeModel(QObject *parent)
+TreeModel::TreeModel(const QString &workDirectory, QObject *parent)
     : QAbstractItemModel(parent)
 {
+    this->workDirectory=workDirectory;
     codec=QTextCodec::codecForName("CP1251");
 
     KsuWorkFilter.append("*.ksu");
@@ -31,7 +32,7 @@ TreeModel::TreeModel(QObject *parent)
     rootItem->Columns.append(HEADER1);
     rootItem->Columns.append(HEADER2);
 
-    loadContent("/home/root",
+    loadContent(this->workDirectory,
                 KsuWorkFilter,
                 KsuBootFilter,
                 KiFilter);
@@ -228,8 +229,7 @@ void TreeModel::loadSoft(TreeItem &storage_item, int type, const QString &path, 
     if(nullptr==soft_item) return;
     soft_item->Columns.append(this->Soft2String(type));
     soft_item->Columns.append("");
-    soft_item->ExData.insert(DK_PATH, path);
-    soft_item->ExData.insert(DK_FILT, filt);
+    soft_item->createSoft(type, path, filt);
 
     QDir dir(path);
     if(false==dir.exists()) return;

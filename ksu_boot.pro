@@ -5,13 +5,20 @@
 #-------------------------------------------------
 
 QT       += core gui
+QT       += serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
 # CONFIG += c++17
+CONFIG += console
 
-target.path = /home/root
+CONFIG(debug, debug|release){
+    message(Debug build!)
+    QMAKE_CXXFLAGS_DEBUG = -O0
+}
+
+target.path = /home/root/ksu_boot1
 INSTALLS += target
 
 TARGET = ksu_boot
@@ -36,7 +43,9 @@ SOURCES += \
     qctrlform.cpp \
     qusbnotifier.cpp \
     task.cpp \
-    bash_cmd.cpp
+    bash_cmd.cpp \
+    qentrydialog.cpp \
+    qbootstrap.cpp
 
 HEADERS += \
         treeitem.h \
@@ -46,10 +55,13 @@ HEADERS += \
     qusbnotifier.h \
     task.hpp \
     bash_cmd.h \
-    vtypes.h
+    vtypes.h \
+    qentrydialog.h \
+    qbootstrap.h
 
 FORMS += \
-    ctrl_form.ui
+    ctrl_form.ui \
+    entry_dialog.ui
 
 # Default rules for deployment.
 # qnx: target.path = /tmp/$${TARGET}/bin

@@ -15,9 +15,10 @@ class TreeModel : public QAbstractItemModel
     Q_OBJECT
 
     QUsbWorker *Worker=nullptr;
+    QString workDirectory;
 
 public:
-    explicit TreeModel(QObject *parent = nullptr);
+    explicit TreeModel(const QString &workDirectory, QObject *parent = nullptr);
     ~TreeModel() override;
     bool Create(int &err);
 

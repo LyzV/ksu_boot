@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QString>
 #include <QFile>
+#include <QFileInfo>
 #include <QTextStream>
 //#include <QHostAddress>
 
@@ -70,6 +71,22 @@ bool QBashCmd::make_usb_auto_mount(void)
     return true;
 }
 
+bool QBashCmd::rmdir(const QString &dirName)
+{
+    QProcess process;
+    QStringList arguments;
+    QProcess::ExitStatus exitStatus;
+    arguments << "-rf" << dirName;
+    process.start("rm", arguments);
+    if(false==process.waitForFinished())
+        return false;
+    exitStatus=process.exitStatus();
+    if(QProcess::NormalExit!=exitStatus)
+        return false;
+
+    return true;
+}
+
 //void QBashCmd::set_ipv4_address(uint32_t addr)
 //{//ifconfig eth0 192.168.3.11
 //    QProcess process;
@@ -111,4 +128,18 @@ void QBashCmd::set_file_execute_mode(const QString &file)
     arguments << "+x" << file;
     process.start(program, arguments);
     process.waitForFinished();
+}
+
+bool QBashCmd::goto_main_soft(const QString &workDirectory)
+{
+    QFileInfo mainSoftFile(workDirectory + "/ksu");
+    if(false==mainSoftFile.exists())
+        return false;
+    if(false==mainSoftFile.isExecutable())
+        return false;
+    QProcess process;
+    QStringList arguments;
+    QString program(mainSoftFile.absoluteFilePath());
+    arguments.clear();
+    return process.startDetached(program, arguments, workDirectory);
 }

@@ -9,9 +9,10 @@
 
 //What is the element?
 #define WT_ROOT     0
-#define WT_STORAGE  1
-#define WT_SOFT     2
-#define WT_FILE     3
+#define WT_OTHER    1
+#define WT_STORAGE  2
+#define WT_SOFT     3
+#define WT_FILE     4
 
 //Data Key of Hash Table
 #define DK_TYPE   0
@@ -19,15 +20,20 @@
 #define DK_NAME   2
 #define DK_FILT   3
 
-//storage type:
+//storage types:
 #define STT_KSU  0
 #define STT_USB  1
 
-//soft type
+//soft types:
 #define SFT_KSUWORK  0
 #define SFT_KSUBOOT  1
 #define SFT_KI       2
 #define SFT_SYS      4
+
+//other types:
+#define OTH_EXIT    0
+#define OTH_HELP    1
+
 
 
 

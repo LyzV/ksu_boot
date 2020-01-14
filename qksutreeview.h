@@ -5,6 +5,7 @@
 #include <QKeyEvent>
 #include "qctrlform.h"
 #include <QTextCodec>
+#include <QString>
 
 class QKsuTreeView : public QTreeView
 {
@@ -13,11 +14,14 @@ class QKsuTreeView : public QTreeView
     QCtrlForm CtrlForm;
     QTextCodec *codec;
 public:
-    explicit QKsuTreeView(QWidget *parent=nullptr);
+    explicit QKsuTreeView(const QString &workDirectory, QWidget *parent=nullptr);
     ~QKsuTreeView();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+
+signals:
+    void quitSignal();
 
 };
 

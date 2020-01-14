@@ -1,11 +1,13 @@
 #include "qksutreeview.h"
 #include "treemodel.h"
+#include "qbootstrap.h"
+#include <QApplication>
 
 #define TU(s) codec->toUnicode(s) //tr(s)
 
-QKsuTreeView::QKsuTreeView(QWidget *parent):
+QKsuTreeView::QKsuTreeView(const QString &workDirectory, QWidget *parent):
     QTreeView(parent),
-    CtrlForm(nullptr)
+    CtrlForm(workDirectory)
 {
     codec=QTextCodec::codecForName("CP1251");
 }
@@ -65,10 +67,20 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                     }
                 }
             }
+            else if(Qt::Key_Home==key)
+            {
+                QStringList bootPathList;
+                bootPathList.append("/home/root/ksu1");
+                bootPathList.append("/home/root/ksu2");
+                QBootstrap::bootstrap(bootPathList, "/home/root");
+                QApplication::quit();
+            }
             else
+            {
                 QTreeView::keyPressEvent(event);
-
+            }
         }
         break;
     }
 }
+
