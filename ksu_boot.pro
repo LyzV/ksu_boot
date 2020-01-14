@@ -45,7 +45,9 @@ SOURCES += \
     task.cpp \
     bash_cmd.cpp \
     qentrydialog.cpp \
-    qbootstrap.cpp
+    qbootstrap.cpp \
+    can.cpp \
+    packing.cpp
 
 HEADERS += \
         treeitem.h \
@@ -57,7 +59,12 @@ HEADERS += \
     bash_cmd.h \
     vtypes.h \
     qentrydialog.h \
-    qbootstrap.h
+    qbootstrap.h \
+    can.h \
+    SafeQueue.h \
+    SafeQueueInterface.h \
+    CanPrimitives.h \
+    packing.h
 
 FORMS += \
     ctrl_form.ui \
