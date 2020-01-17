@@ -8,84 +8,12 @@
 #include <QRegularExpression>
 #include <QByteArray>
 #include "bash_cmd.h"
+#include <inttypes.h>
 
-bool QBootstrap::findInList(const QStringList &list, const QString &findString)
-{
-    for(int i=0; i<list.count(); ++i)
-    {
-        if(list.at(i)==findString)
-            return true;
-    }
-    return false;
-}
+#define TU(s) codec->toUnicode(s)
+#define MAX_CNT 7
 
-int QBootstrap::choiceLastCreated(const QStringList &pathList, const QStringList &exceptPathList, QDateTime &lastCreated)
-{
-    int returnValue=-1;
-    lastCreated=QDateTime(QDate(1, 1, 1), QTime(0, 0));
-    for(int i=0; i<pathList.count(); ++i)
-    {
-        QDir bootDirectory(pathList.at(i));
-        if(false==bootDirectory.exists())
-            continue;
-        if(true==findInList(exceptPathList, pathList.at(i)))
-            continue;
-
-        QFileInfoList fileInfoList=bootDirectory.entryInfoList();
-        for(int j=0; j<fileInfoList.count(); ++j)
-        {
-            QFileInfo fileInfo(fileInfoList.at(j));
-            if(false==fileInfo.exists())
-                continue;
-            if(false==fileInfo.isFile())
-                continue;
-            if(false==fileInfo.isExecutable())
-                continue;
-            QDateTime created=fileInfo.created();
-            if(created>lastCreated)
-            {
-                lastCreated=created;
-                returnValue=i;
-            }
-        }
-    }
-    return returnValue;
-}
-
-int QBootstrap::choiceFirstCreated(const QStringList &pathList, const QStringList &exceptPathList, QDateTime &firstCreated)
-{
-    int returnValue=-1;
-    firstCreated=QDateTime::currentDateTime();
-    for(int i=0; i<pathList.count(); ++i)
-    {
-        QDir bootDirectory(pathList.at(i));
-        if(false==bootDirectory.exists())
-            continue;
-        if(true==findInList(exceptPathList, pathList.at(i)))
-            continue;
-
-        QFileInfoList fileInfoList=bootDirectory.entryInfoList();
-        for(int j=0; j<fileInfoList.count(); ++j)
-        {
-            QFileInfo fileInfo(fileInfoList.at(j));
-            if(false==fileInfo.exists())
-                continue;
-            if(false==fileInfo.isFile())
-                continue;
-            if(false==fileInfo.isExecutable())
-                continue;
-            QDateTime created=fileInfo.created();
-            if(created<firstCreated)
-            {
-                firstCreated=created;
-                returnValue=i;
-            }
-        }
-    }
-    return returnValue;
-}
-
-bool QBootstrap::extractChecksumString(const QString &text, QString &checksumString)
+bool QBootstrap::extractChecksumString(const QString &text, QString &checksumString) const
 {
     QStringList words=text.split(" ");// (QRegExp(" \t")); //(QRegularExpression(" \t"));
     checksumString=words.at(0);
@@ -107,7 +35,7 @@ bool QBootstrap::extractChecksumString(const QString &text, QString &checksumStr
     return true;
 }
 
-bool QBootstrap::getChecksumString(const QString &checksumFileName, QString &checksumString)
+bool QBootstrap::getChecksumString(const QString &checksumFileName, QString &checksumString) const
 {
     QFile checksumFile(checksumFileName);
     if(false==checksumFile.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -120,7 +48,7 @@ bool QBootstrap::getChecksumString(const QString &checksumFileName, QString &che
     return true;
 }
 
-bool QBootstrap::checkSum(const QString &fileName, const QString &checksumString)
+bool QBootstrap::getCheckSum(const QString &fileName, const QString &checksumString) const
 {
     QProcess md5sum;
     QStringList programArguments;
@@ -140,7 +68,28 @@ bool QBootstrap::checkSum(const QString &fileName, const QString &checksumString
     return true;
 }
 
-bool QBootstrap::getBootInfo(const QString &bootPath, QBootstrap::QBootInfo &bootInfo)
+bool QBootstrap::getCnt(const QString &cntFileName, int &cnt) const
+{
+    QFile cntFile(cntFileName);
+    if(false==cntFile.exists())
+        return false;
+
+    if(false==cntFile.open(QIODevice::ReadOnly))
+        return false;
+    QTextStream stream(&cntFile);
+    QString allText=stream.readAll();
+    cntFile.close();
+
+    allText=allText.trimmed();
+    bool ok;
+    cnt=allText.toInt(&ok);
+    if(false==ok)
+        return false;
+
+    return true;
+}
+
+bool QBootstrap::getBootInfo(const QString &bootPath, QBootstrap::QBootInfo &bootInfo) const
 {
     bootInfo.correct=false;
 
@@ -161,14 +110,16 @@ bool QBootstrap::getBootInfo(const QString &bootPath, QBootstrap::QBootInfo &boo
         if(false==startupFileInfo.isExecutable())
             continue;
         bootInfo.startupFileName=startupFileInfo.fileName();
-        bootInfo.createdDateTime=startupFileInfo.created();
         bootInfo.checksumFileName=bootInfo.startupFileName + ".md5";
         QFile checksumFile(bootPath + "/" + bootInfo.checksumFileName);
         if(false==checksumFile.exists())
             continue;
         if(false==getChecksumString(checksumFile.fileName(), bootInfo.checksumString))
             continue;
-        if(false==checkSum(startupFileInfo.absoluteFilePath(), bootInfo.checksumString))
+        if(false==getCheckSum(startupFileInfo.absoluteFilePath(), bootInfo.checksumString))
+            continue;
+        QString cntFileName=startupFileInfo.absolutePath() + "/cnt";
+        if(false==getCnt(cntFileName, bootInfo.cnt))
             continue;
 
         //Yes! I find it!
@@ -178,113 +129,143 @@ bool QBootstrap::getBootInfo(const QString &bootPath, QBootstrap::QBootInfo &boo
     return false;
 }
 
-void QBootstrap::printBootInfo(const QBootstrap::QBootInfo &bootInfo)
+int QBootstrap::cmpCnt(int one, int two) const
 {
-    Q_UNUSED(bootInfo);
-//    traceObject.trace("\n*** " + bootInfo.bootDirectoryPath + " ***");
-//    traceObject.trace("correct= " + bootInfo.correct);
-//    traceObject.trace("startupFileName= " + bootInfo.startupFileName);
-//    traceObject.trace("createdDateTime= " + bootInfo.createdDateTime.toString());
-//    traceObject.trace("checksumFileName= " + bootInfo.checksumFileName);
-//    traceObject.trace("checksumString= " + bootInfo.checksumString);
+    if(one==two) return 0;
+
+    if(one>two)
+    {
+        if((one-two)>(MAX_CNT>>1))
+            return -1;
+        else
+            return 1;
+    }
+    else
+    {
+        if((two-one)>(MAX_CNT>>1))
+            return 1;
+        else
+            return -1;
+    }
 }
 
-bool QBootstrap::buildAllBootDirectory(const QStringList &pathList)
+int QBootstrap::incCnt(int cnt) const
+{
+    ++cnt;
+    if(cnt>=MAX_CNT)
+        cnt=0;
+    return cnt;
+}
+
+void QBootstrap::buildBootInfo()
+{
+    int maxCntIndex=-1;
+    int minCntIndex=-1;
+    bootInfoList.clear();
+    for(int i=0; i<bootPathList.count(); ++i)
+    {
+        QBootInfo bootInfo;
+        if(true==getBootInfo(bootPathList.at(i), bootInfo))
+        {
+            if(true==bootInfo.correct)
+            {
+                if(0<=maxCntIndex)
+                {
+                    //if(bootInfo.cnt > bootInfoList.at(maxCntIndex).cnt)
+                    if(0 < cmpCnt(bootInfo.cnt, bootInfoList.at(maxCntIndex).cnt))
+                        maxCntIndex=i;
+                }
+                else
+                    maxCntIndex=i;
+
+                if(0<=minCntIndex)
+                {
+                    //if(bootInfo.cnt < bootInfoList.at(minCntIndex).cnt)
+                    if(0 > cmpCnt(bootInfo.cnt, bootInfoList.at(minCntIndex).cnt))
+                        minCntIndex=i;
+                }
+                else
+                    minCntIndex=i;
+            }
+            else
+            {
+                targetIndex=i;
+            }
+        }
+        else
+        {
+            targetIndex=i;
+        }
+        bootInfoList.append(bootInfo);
+    }
+    bootIndex=maxCntIndex;
+    if(0>bootIndex) currentCounter=0;
+    else            currentCounter=bootInfoList.at(bootIndex).cnt;
+    if(0>targetIndex)
+        targetIndex=minCntIndex;
+    if(0>targetIndex)
+        targetIndex=0;
+}
+
+bool QBootstrap::buildAllBootDirectory(const QStringList &pathList) const
 {
     for(int i=0; i<pathList.count(); ++i)
     {
         QDir directory(pathList.at(i));
         if(true==directory.exists())
             continue;
-
         if(false==directory.mkpath(pathList.at(i)))
             return false;
     }
     return true;
 }
 
-void QBootstrap::printBootPath(const QString &bootPath)
+bool QBootstrap::create(const QStringList &bootPathList, const QString &workDirectoryPath)
 {
-    Q_UNUSED(bootPath);
-//    QBootInfo bootInfo;
-//    if(true==getBootInfo(bootPath, bootInfo))
-//    {
-//        printBootInfo(bootInfo);
-//    }
-//    else
-//    {
-//        traceObject.trace("\n*** " + bootPath + " ***");
-//        traceObject.trace("It is not correct boot path!");
-//    }
-}
-
-void QBootstrap::printBootPathList(const QStringList &bootPathList)
-{
-    Q_UNUSED(bootPathList);
-//    for(int i=0; i<bootPathList.count(); ++i)
-//    {
-//        QString bootPath=bootPathList.at(i);
-//        printBootPath(bootPath);
-//    }
-}
-
-bool QBootstrap::bootstrap(const QString &bootPath, const QString &workDirectory)
-{
-    QBootInfo bootInfo;
-    if(false==getBootInfo(bootPath, bootInfo))
-    {
-        //printBootPath(bootPath);
+    destroy();
+    if(false==buildAllBootDirectory(bootPathList))
         return false;
-    }
-    //printBootInfo(bootInfo);
+    this->workDirectoryPath=workDirectoryPath;
+    QDir workDirectory(workDirectoryPath);
+    if(false==workDirectory.exists())
+        return false;
+    this->bootPathList.append(bootPathList);
+    buildBootInfo();
+    return true;
+}
+
+void QBootstrap::destroy()
+{
+    bootPathList.clear();
+    bootInfoList.clear();
+    currentCounter=0;
+    targetIndex=-1;
+    bootIndex=-1;
+}
+
+bool QBootstrap::bootstrap() const
+{
+    if(0>bootIndex)
+        return false;
 
     QProcess bootProgram;
-    QString programFullName=bootInfo.bootDirectoryPath + "/" +bootInfo.startupFileName;
-    return bootProgram.startDetached(programFullName, QStringList(), workDirectory);
+    QString programFullName=bootInfoList.at(bootIndex).bootDirectoryPath + "/" +
+                            bootInfoList.at(bootIndex).startupFileName;
+    return bootProgram.startDetached(programFullName, QStringList(), workDirectoryPath);
 }
 
-bool QBootstrap::bootstrap(const QStringList &bootPathList, const QString &workDirectory)
+bool QBootstrap::programSoft(const QString &soft, QString &errorString)
 {
-    //printBootPathList(bootPathList);
+    QString processString;
+    errorString=TU("");
 
-    QDateTime lastCreated;
-    int lastCreatedIndex=choiceLastCreated(bootPathList, QStringList(), lastCreated);
-    if(0>lastCreatedIndex)
-        return false;
-    if(lastCreatedIndex>=bootPathList.count())
-        return false;
-    return bootstrap(bootPathList.at(lastCreatedIndex), workDirectory);
+    processString=TU("œÓ‰„ÓÚÓ‚Í‡ ...");
+    emit programProgressSignal(0, processString);
 
-}
+    if(0 > targetIndex)
+        targetIndex=0;
 
-bool QBootstrap::programSoft(const QStringList &bootPathList, const QString &soft)
-{
-    if(1>bootPathList.count())
-    {
-        return false;
-    }
-    if(false==buildAllBootDirectory(bootPathList))
-    {
-        return false;
-    }
-
-    QDateTime firstCreated;
-    int firstCreatedIndex=choiceFirstCreated(bootPathList, QStringList(), firstCreated);
-    if(0>firstCreatedIndex)
-        firstCreatedIndex=0;
-    else
-    {
-        QDateTime lastCreated;
-        int lastCreatedIndex=choiceLastCreated(bootPathList, QStringList(), lastCreated);
-        if(lastCreatedIndex==firstCreatedIndex)
-        {//get next index
-            ++firstCreatedIndex;
-            if(firstCreatedIndex>=bootPathList.count())
-                firstCreatedIndex=0;
-        }
-    }
-
-    QString bootPath=bootPathList.at(firstCreatedIndex);
+    QString bootPath=bootPathList.at(targetIndex);
 
     // rm -rf bootPath
     QDir bootDir(bootPath);
@@ -293,9 +274,11 @@ bool QBootstrap::programSoft(const QStringList &bootPathList, const QString &sof
     // mkdir bootPath
     if(false==bootDir.mkpath(bootPath))
     {
+        errorString=TU("Õ≈ ÃŒ√” «¿œ»—¿“‹ œ–Œÿ»¬ ”!");
         return false;
     }
 
+    emit programProgressSignal(50, TU("–‡ÒÔ‡ÍÓ‚Í‡ ÔÓ¯Ë‚ÍË ..."));
     // tar -xf soft -C bootInfo.bootDirectoryPath
     QProcess process;
     QStringList arguments;
@@ -304,25 +287,54 @@ bool QBootstrap::programSoft(const QStringList &bootPathList, const QString &sof
     process.start("tar", arguments);
     if(false==process.waitForFinished())
     {
+        errorString=TU("Õ≈»—œ–¿¬Õ¿ﬂ œ–Œÿ»¬ ¿!");
         return false;
     }
     exitStatus=process.exitStatus();
     if(QProcess::NormalExit!=exitStatus)
     {
+        errorString=TU("Õ≈»—œ–¿¬Õ¿ﬂ œ–Œÿ»¬ ¿!");
+        return false;
+    }
+    int exitCode=process.exitCode();
+    if(0!=exitCode)
+    {
+        errorString=TU("Õ≈»—œ–¿¬Õ¿ﬂ œ–Œÿ»¬ ¿!");
         return false;
     }
 
-    // verify
-    QBootInfo bootInfo;
-    if(false==getBootInfo(bootPath, bootInfo))
+    QFile counterFile(bootPath + "/cnt");
+    if(false==counterFile.open(QIODevice::WriteOnly))
     {
+        errorString=TU("Õ≈ ÃŒ√” «¿œ»—¿“‹ œ–Œÿ»¬ ”!");
+        return false;
+    }
+    QTextStream stream(&counterFile);
+    stream << QString::number(incCnt(currentCounter));
+    counterFile.close();
+
+
+    emit programProgressSignal(80, TU("œÓ‚ÂÍ‡ ..."));
+    buildBootInfo();
+    if(0>bootIndex)
+    {
+        errorString=TU("Õ≈ «¿œ»—¿À¿—‹ œ–Œÿ»¬ ¿!");
+        return false;
+    }
+    if(bootPath!=bootInfoList.at(bootIndex).bootDirectoryPath)
+    {
+        errorString=TU("Õ≈ «¿œ»—¿À¿—‹ œ–Œÿ»¬ ¿!");
         return false;
     }
 
     //chmod +x startupFileName
-    QBashCmd::set_file_execute_mode(bootInfo.bootDirectoryPath + "/" + bootInfo.startupFileName);
+    QBashCmd::set_file_execute_mode(bootInfoList.at(bootIndex).bootDirectoryPath + "/" +
+                                    bootInfoList.at(bootIndex).startupFileName);
     // sync; drop_caches
     QBashCmd::flush_storage();
 
+    emit programProgressSignal(90, TU("«¿œ–Œ√–¿ÃÃ»–Œ¬¿ÕŒ ”—œ≈ÿÕŒ!"));
+
     return true;
 }
+

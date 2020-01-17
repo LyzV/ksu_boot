@@ -47,7 +47,8 @@ SOURCES += \
     qentrydialog.cpp \
     qbootstrap.cpp \
     can.cpp \
-    packing.cpp
+    packing.cpp \
+    qintelhexparcer.cpp
 
 HEADERS += \
         treeitem.h \
@@ -64,7 +65,8 @@ HEADERS += \
     SafeQueue.h \
     SafeQueueInterface.h \
     CanPrimitives.h \
-    packing.h
+    packing.h \
+    qintelhexparcer.h
 
 FORMS += \
     ctrl_form.ui \

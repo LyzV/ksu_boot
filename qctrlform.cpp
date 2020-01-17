@@ -5,7 +5,6 @@
 #include <QFile>
 #include <QMessageBox>
 #include "treeitem.h"
-#include "qbootstrap.h"
 
 #define TU(s) codec->toUnicode((s))
 
@@ -23,6 +22,8 @@ QCtrlForm::QCtrlForm(const QString &workDirectory, QWidget *parent) :
     ui->doLabel->hide();
     ui->doProgBar->hide();
 
+    bootService=new QBootstrap(this);
+
     ui->doProgBar->setMinimum(0);
     ui->doProgBar->setMaximum(100);
 
@@ -32,6 +33,8 @@ QCtrlForm::QCtrlForm(const QString &workDirectory, QWidget *parent) :
     Q_ASSERT(con);
     //con=QObject::connect(this->ui->delButton, SIGNAL(pressed()), this, SLOT(deleteSlot());
     //Q_ASSERT(con);
+    con=QObject::connect(bootService, SIGNAL(programProgressSignal(int,QString)), this, SLOT(progressSlot(int,QString)));
+    Q_ASSERT(con);
 }
 
 QCtrlForm::~QCtrlForm()
@@ -75,7 +78,7 @@ bool QCtrlForm::copySoft(const QString &from, const QString &to)
 void QCtrlForm::progSlot()
 {
     ui->errorLabel->hide();
-    ui->doLabel->setText(TU("ÏÐÎÃÐÀÌÌÈÐÓÞ..."));
+    ui->doLabel->setText(TU(""));
     ui->doLabel->show();
     ui->doProgBar->setValue(0);
     ui->doProgBar->show();
@@ -87,17 +90,18 @@ void QCtrlForm::progSlot()
         default:
         case SFT_KSUWORK:
             {
-                ui->doProgBar->setValue(10);
-                QApplication::processEvents();
                 QStringList bootPathList;
                 bootPathList << workDirectory + "/ksu1" << workDirectory + "/ksu2";
-                if(true==QBootstrap::programSoft(bootPathList, filePath+"/"+fileName))
+                bootService->create(bootPathList, "/home/root");
+                QString errorString;
+                if(true==bootService->programSoft(filePath+"/"+fileName, errorString))
                 {
                     ui->doLabel->setText(TU("ÓÑÏÅØÍÎ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀË!"));
                     ui->doProgBar->setValue(100);
                 }
                 else
                 {
+                    ui->errorLabel->setText(errorString);
                     ui->errorLabel->show();
                 }
                 QApplication::processEvents();
@@ -105,17 +109,18 @@ void QCtrlForm::progSlot()
             break;
         case SFT_KSUBOOT:
         {
-            ui->doProgBar->setValue(10);
-            QApplication::processEvents();
             QStringList bootPathList;
             bootPathList << workDirectory + "/ksu_boot1" << workDirectory + "/ksu_boot2";
-            if(true==QBootstrap::programSoft(bootPathList, filePath+"/"+fileName))
+            bootService->create(bootPathList, "/home/root");
+            QString errorString;
+            if(true==bootService->programSoft(filePath+"/"+fileName, errorString))
             {
                 ui->doLabel->setText(TU("ÓÑÏÅØÍÎ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀË!"));
                 ui->doProgBar->setValue(100);
             }
             else
             {
+                ui->errorLabel->setText(errorString);
                 ui->errorLabel->show();
             }
             QApplication::processEvents();
@@ -151,4 +156,11 @@ void QCtrlForm::progSlot()
 void QCtrlForm::deleteSlot()
 {
 
+}
+
+void QCtrlForm::progressSlot(int progress, const QString &stringProgress)
+{
+    ui->doProgBar->setValue(progress);
+    ui->doLabel->setText(stringProgress);
+    QApplication::processEvents();
 }

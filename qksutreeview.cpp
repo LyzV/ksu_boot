@@ -70,9 +70,11 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
             else if(Qt::Key_Home==key)
             {
                 QStringList bootPathList;
+                QBootstrap bootService;
                 bootPathList.append("/home/root/ksu1");
                 bootPathList.append("/home/root/ksu2");
-                QBootstrap::bootstrap(bootPathList, "/home/root");
+                bootService.create(bootPathList, "/home/root");
+                bootService.bootstrap();
                 QApplication::quit();
             }
             else

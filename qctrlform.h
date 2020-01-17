@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QTextCodec>
 #include <QString>
+#include "qbootstrap.h"
 
 namespace Ui { class CtrlForm; }
 
@@ -24,6 +25,7 @@ private:
     QString fileName;
     QString filePath;
     QString workDirectory;
+    QBootstrap *bootService=nullptr;
 
     bool copySoft(const QString &from, const QString &to);
 
@@ -31,6 +33,7 @@ private:
 private slots:
     void progSlot(void);
     void deleteSlot(void);
+    void progressSlot(int progress, const QString &stringProgress);
 };
 
 #endif // QCTRLFORM_H

@@ -42,9 +42,11 @@ int main(int argc, char *argv[])
     if(QDialog::Rejected==ret)
     {//go to main soft
         QStringList bootPathList;
+        QBootstrap bootService;
         bootPathList << currentWorkDirectoryName + "/ksu1";
         bootPathList << currentWorkDirectoryName + "/ksu2";
-        if(true==QBootstrap::bootstrap(bootPathList, currentWorkDirectoryName))
+        bootService.create(bootPathList, currentWorkDirectoryName);
+        if(true==bootService.bootstrap())
         {
             a.exit(0);
             return 0;
