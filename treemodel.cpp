@@ -22,22 +22,10 @@ TreeModel::TreeModel(const QString &workDirectory, QObject *parent)
     this->workDirectory=workDirectory;
     codec=QTextCodec::codecForName("CP1251");
 
-    KsuWorkFilter.append("*.ksu");
-    KsuBootFilter.append("*.ldr");
-    KiFilter.append("*.ki");
-
-    layoutAboutToBeChanged();
     rootItem = new TreeItem;
     Q_ASSERT(rootItem);
     rootItem->Columns.append(HEADER1);
     rootItem->Columns.append(HEADER2);
-
-    loadContent(this->workDirectory,
-                KsuWorkFilter,
-                KsuBootFilter,
-                KiFilter);
-    layoutChanged();
-
 }
 
 TreeModel::~TreeModel()
@@ -46,8 +34,19 @@ TreeModel::~TreeModel()
     if(nullptr==Worker) delete Worker;
 }
 
-bool TreeModel::Create(int &err)
+bool TreeModel::Create(const QString &distFilter, int &err)
 {
+    this->distFilter=distFilter;
+
+    KsuWorkFilter.append("*." + distFilter + ".ksu");
+    KsuBootFilter.append("*." + distFilter + ".ldr");
+    KiFilter.append("*.ki");
+    loadContent(this->workDirectory,
+                KsuWorkFilter,
+                KsuBootFilter,
+                KiFilter);
+    layoutChanged();
+
     QUsbWorker *Worker=new QUsbWorker;
     if(nullptr==Worker)
     {

@@ -17,10 +17,12 @@ class QBootstrap: public QObject
         QBootInfo()
         {
             correct=false;
-            bootDirectoryPath="/home/root/ksu_boot1";
-            startupFileName="ksu_boot.strip";
-            checksumFileName="ksu_boot.strip.md5";
+            cnt=0;
+            bootDirectoryPath="";
+            startupFileName="";
+            checksumFileName="";
             checksumString="";
+            errorText="";
         }
         bool correct;
         int cnt;
@@ -28,6 +30,7 @@ class QBootstrap: public QObject
         QString startupFileName;
         QString checksumFileName;
         QString checksumString;
+        QString errorText;
     };
 
     QTextCodec *codec=nullptr;
@@ -48,6 +51,7 @@ class QBootstrap: public QObject
     int incCnt(int cnt) const;
     void buildBootInfo();
     bool buildAllBootDirectory(const QStringList &pathList) const;
+    void printBootInfo(const QBootInfo &bootInfo) const;
 
 public:
     QBootstrap(QObject *parent=nullptr): QObject(parent){ codec=QTextCodec::codecForName("CP1251"); }
@@ -56,6 +60,8 @@ public:
 
     bool bootstrap() const;
     bool programSoft(const QString &soft, QString &errorString);
+    void printBootPath(const QString &bootPath) const;
+    void printBootPathList(const QStringList &bootPathList) const;
 
 signals:
     void programProgressSignal(int progress, QString stringProgress);

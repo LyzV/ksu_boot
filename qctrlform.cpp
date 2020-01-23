@@ -22,6 +22,9 @@ QCtrlForm::QCtrlForm(const QString &workDirectory, QWidget *parent) :
     ui->doLabel->hide();
     ui->doProgBar->hide();
 
+    ui->copyButton->setDisabled(true);
+    ui->delButton->setDisabled(true);
+
     bootService=new QBootstrap(this);
 
     ui->doProgBar->setMinimum(0);
@@ -133,24 +136,6 @@ void QCtrlForm::progSlot()
     {
     }
     ui->exitButton->setFocus();
-
-//    ui->doLabel->setText(TU("опнцпюллхпсч..."));
-//    ui->doProgBar->setValue(0);
-//    ui->doLabel->show();
-//    ui->doProgBar->show();
-//    QApplication::processEvents();
-//    for(int i=0; i<100; ++i)
-//    {
-//        ui->doProgBar->setValue(i);
-//        for(int j=0; j<10; ++j)
-//        {
-//            QApplication::processEvents();
-//            QThread::msleep(10);
-//        }
-//    }
-//    ui->doProgBar->setValue(ui->doProgBar->maximum());
-//    ui->errorLabel->show();
-    //    ui->doLabel->setText(TU("х гдеяэ йюйни-рн рейяр..."));
 }
 
 void QCtrlForm::deleteSlot()

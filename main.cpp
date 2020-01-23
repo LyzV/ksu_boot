@@ -11,12 +11,14 @@
 #include <QFile>
 #include "bash_cmd.h"
 #include "qbootstrap.h"
+#include <QSettings>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    QCoreApplication::setOrganizationName("RIMERA");
     QCoreApplication::setApplicationName("ksu_boot");
-    QCoreApplication::setApplicationVersion("1.0.2");
+    QCoreApplication::setApplicationVersion("1.0.1");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Second time boot KSU");
@@ -53,9 +55,19 @@ int main(int argc, char *argv[])
         }
     }
 
+    QSettings distInfo("/home/root/linux-distributive-version.txt", QSettings::IniFormat);
+    QString bspVersion=distInfo.value("BSP/version", QVariant("")).toString();
+    bspVersion=bspVersion;
+    QVariant majorDistVariant=distInfo.value("DIST/major", QVariant(-1));
+    bool ok;
+    int majorDist=majorDistVariant.toInt(&ok);
+    QString distFilter;
+    if((false==ok)||(0>majorDist))  distFilter="*";
+    else                            distFilter=QString::number(majorDist);
+
     //run boot loader
     int err;
-    if(false==model.Create(err))
+    if(false==model.Create(distFilter, err))
     {
         a.exit(1);
         return 1;

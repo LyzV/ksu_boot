@@ -1,4 +1,5 @@
 #include "qbootstrap.h"
+#include <QDebug>
 #include <QFile>
 #include <QFileInfo>
 #include <QFileInfoList>
@@ -95,7 +96,10 @@ bool QBootstrap::getBootInfo(const QString &bootPath, QBootstrap::QBootInfo &boo
 
     QDir bootDirectory(bootPath);
     if(false==bootDirectory.exists())
+    {
+        bootInfo.errorText="Boot directory does not exist";
         return false;
+    }
     bootInfo.bootDirectoryPath=bootDirectory.absolutePath();
 
     QFileInfoList fileInfoList=bootDirectory.entryInfoList();
@@ -114,18 +118,30 @@ bool QBootstrap::getBootInfo(const QString &bootPath, QBootstrap::QBootInfo &boo
         QFile checksumFile(bootPath + "/" + bootInfo.checksumFileName);
         if(false==checksumFile.exists())
             continue;
+
         if(false==getChecksumString(checksumFile.fileName(), bootInfo.checksumString))
-            continue;
+        {
+            bootInfo.errorText="Format checksum file is not correct";
+            return false;
+        }
         if(false==getCheckSum(startupFileInfo.absoluteFilePath(), bootInfo.checksumString))
-            continue;
+        {
+            bootInfo.errorText="Checksum is not correct";
+            return false;
+        }
         QString cntFileName=startupFileInfo.absolutePath() + "/cnt";
         if(false==getCnt(cntFileName, bootInfo.cnt))
-            continue;
+        {
+            bootInfo.errorText="Format cnt file is not correct";
+            return false;
+        }
 
         //Yes! I find it!
         bootInfo.correct=true;
+        bootInfo.errorText="";
         return true;
     }
+    bootInfo.errorText="Can not find startup file";
     return false;
 }
 
@@ -220,6 +236,18 @@ bool QBootstrap::buildAllBootDirectory(const QStringList &pathList) const
     return true;
 }
 
+void QBootstrap::printBootInfo(const QBootstrap::QBootInfo &bootInfo) const
+{
+    qDebug() << "";
+    qDebug() << "=== " << bootInfo.bootDirectoryPath << " ===";
+    qDebug() << "file=" << bootInfo.startupFileName;
+    if(bootInfo.correct) qDebug() << "correct=true" ;
+    else                 qDebug() << "correct=false";
+    qDebug() << "cnt=" << QString::number(bootInfo.cnt);
+    qDebug() << "checksum=" << bootInfo.checksumString;
+    qDebug() << "Error: " << bootInfo.errorText;
+}
+
 bool QBootstrap::create(const QStringList &bootPathList, const QString &workDirectoryPath)
 {
     destroy();
@@ -231,6 +259,11 @@ bool QBootstrap::create(const QStringList &bootPathList, const QString &workDire
         return false;
     this->bootPathList.append(bootPathList);
     buildBootInfo();
+
+    for(int i=0; i<bootInfoList.count(); ++i)
+    {
+        printBootInfo(bootInfoList.at(i));
+    }
     return true;
 }
 
@@ -247,6 +280,8 @@ bool QBootstrap::bootstrap() const
 {
     if(0>bootIndex)
         return false;
+
+    printBootPath(bootInfoList.at(bootIndex).bootDirectoryPath);
 
     QProcess bootProgram;
     QString programFullName=bootInfoList.at(bootIndex).bootDirectoryPath + "/" +
@@ -336,5 +371,21 @@ bool QBootstrap::programSoft(const QString &soft, QString &errorString)
     emit programProgressSignal(90, TU("«¿œ–Œ√–¿ÃÃ»–Œ¬¿ÕŒ ”—œ≈ÿÕŒ!"));
 
     return true;
+}
+
+void QBootstrap::printBootPath(const QString &bootPath) const
+{
+    QBootInfo bootInfo;
+    getBootInfo(bootPath, bootInfo);
+    printBootInfo(bootInfo);
+}
+
+void QBootstrap::printBootPathList(const QStringList &bootPathList) const
+{
+    for(int i=0; i<bootPathList.count(); ++i)
+    {
+        QString bootPath=bootPathList.at(i);
+        printBootPath(bootPath);
+    }
 }
 

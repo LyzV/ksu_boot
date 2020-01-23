@@ -74,8 +74,8 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                 bootPathList.append("/home/root/ksu1");
                 bootPathList.append("/home/root/ksu2");
                 bootService.create(bootPathList, "/home/root");
-                bootService.bootstrap();
-                QApplication::quit();
+                if(true==bootService.bootstrap())
+                    QApplication::quit();
             }
             else
             {

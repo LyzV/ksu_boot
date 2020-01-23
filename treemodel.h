@@ -20,7 +20,7 @@ class TreeModel : public QAbstractItemModel
 public:
     explicit TreeModel(const QString &workDirectory, QObject *parent = nullptr);
     ~TreeModel() override;
-    bool Create(int &err);
+    bool Create(const QString &distFilter, int &err);
 
 static const QString sROOT;
 static const QString sSTORAGE;
@@ -61,6 +61,7 @@ private:
     QTextCodec *codec;//Translate from cp1251 to utf8
     QString mount;
     bool mount_flag;
+    QString distFilter;//Версия дистрибутива linux
     QStringList KsuWorkFilter, KsuBootFilter, KiFilter;
 
 private slots:
