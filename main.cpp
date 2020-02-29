@@ -13,12 +13,17 @@
 #include "qbootstrap.h"
 #include <QSettings>
 
+#include "qintelhexparcer.h"
+static void testParser();
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("RIMERA");
     QCoreApplication::setApplicationName("ksu_boot");
     QCoreApplication::setApplicationVersion("1.0.1");
+
+testParser();
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Second time boot KSU");
@@ -82,6 +87,13 @@ int main(int argc, char *argv[])
     view.setGeometry(QRect(0, 0, 640, 480));
     view.show();
     return a.exec();
+}
+
+static void testParser()
+{
+    QIntelHexParcer::ParseResult parseResult;
+    bool ret=QIntelHexParcer::parse("/home/root/4B-03-02.KI", parseResult);
+    ret=ret;
 }
 
 
