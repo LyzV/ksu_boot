@@ -26,6 +26,10 @@ TreeModel::TreeModel(const QString &workDirectory, QObject *parent)
     Q_ASSERT(rootItem);
     rootItem->Columns.append(HEADER1);
     rootItem->Columns.append(HEADER2);
+
+    timer.setInterval(1000);
+    connect(&timer, SIGNAL(timeout()), this, SLOT(TimeoutSlot()));
+    timer.start();
 }
 
 TreeModel::~TreeModel()
@@ -307,6 +311,12 @@ void TreeModel::MountSlot(const QString &mpoint, const QString &device, bool mou
     {//unmounted
         removeUsbContent();
     }
+}
+
+#include "gpio.h"
+void TreeModel::TimeoutSlot()
+{
+    gpio_wdt_reset();
 }
 
 QString TreeModel::Soft2String(int soft_type) const

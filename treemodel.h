@@ -9,6 +9,7 @@
 #include <QTextCodec>
 #include "treeitem.h"
 #include "qusbnotifier.h"
+#include <QTimer>
 
 class TreeModel : public QAbstractItemModel
 {
@@ -16,6 +17,7 @@ class TreeModel : public QAbstractItemModel
 
     QUsbWorker *Worker=nullptr;
     QString workDirectory;
+    QTimer timer;
 
 public:
     explicit TreeModel(const QString &workDirectory, QObject *parent = nullptr);
@@ -66,6 +68,7 @@ private:
 
 private slots:
     void MountSlot(const QString &mpoint, const QString &device, bool mount_flag);
+    void TimeoutSlot();
 };
 
 #endif // TREEMODEL_H

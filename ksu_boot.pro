@@ -48,7 +48,9 @@ SOURCES += \
     qbootstrap.cpp \
     can.cpp \
     packing.cpp \
-    qintelhexparcer.cpp
+    qintelhexparcer.cpp \
+    gpio.cpp \
+    cpio.cpp
 
 HEADERS += \
         treeitem.h \
@@ -66,7 +68,9 @@ HEADERS += \
     SafeQueueInterface.h \
     CanPrimitives.h \
     packing.h \
-    qintelhexparcer.h
+    qintelhexparcer.h \
+    gpio.h \
+    cpio.h
 
 FORMS += \
     ctrl_form.ui \

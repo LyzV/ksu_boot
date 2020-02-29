@@ -12,13 +12,14 @@
 #include "bash_cmd.h"
 #include "qbootstrap.h"
 #include <QSettings>
+#include "gpio.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("RIMERA");
     QCoreApplication::setApplicationName("ksu_boot");
-    QCoreApplication::setApplicationVersion("1.0.1");
+    QCoreApplication::setApplicationVersion("1.0.2");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Second time boot KSU");
@@ -39,6 +40,10 @@ int main(int argc, char *argv[])
 
     QBashCmd::stop_getty();
     //QBashCmd::make_usb_auto_mount();
+
+    //watch dog
+    gpio_open();
+    gpio_wdt_reset();
 
     int ret=entryDialog.exec();
     if(QDialog::Rejected==ret)
