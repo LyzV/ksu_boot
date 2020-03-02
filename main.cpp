@@ -13,7 +13,7 @@
 #include "qbootstrap.h"
 #include <QSettings>
 
-#include "qintelhexparcer.h"
+
 static void testParser();
 
 int main(int argc, char *argv[])
@@ -89,11 +89,76 @@ testParser();
     return a.exec();
 }
 
+
+static void vectorToByteArray(const QVector<uint16_t> &vec, QByteArray &array)
+{
+    array.clear();
+    for(int i=0; i<vec.count(); ++i)
+    {
+        uint16_t value=vec.at(i);
+        array.append((uint8_t) value);
+        array.append((uint8_t)(value>>8));
+    }
+}
+#include "qintelhexparcer.h"
+#include "kiprotocol.h"
 static void testParser()
 {
+    KiProtocol protocol;
     QIntelHexParcer::ParseResult parseResult;
-    bool ret=QIntelHexParcer::parse("/home/root/4B-03-02.KI", parseResult);
-    ret=ret;
+    QIntelHexParcer::FileRecord record;
+    QIntelHexParcer parser;
+    QByteArray array;
+
+    int err;
+    if(false==protocol.create(err))
+        return;
+
+    bool ret=parser.verifyHexFile("/home/root/4B-03-02.KI", parseResult);
+    if(false==ret)
+        return;
+
+    protocol.reset();
+    QThread::msleep(1000);
+    if(false==protocol.connect())
+        return;
+
+    uint16_t ver, type;
+    if(false==protocol.hver(ver, type))
+    {
+        protocol.disconnect();
+        return;
+    }
+
+    protocol.erase(nullptr);
+
+    uint32_t exAddress=0;
+    for(
+        ret=parser.firstRecord(record, parseResult);
+        true==ret;
+        ret=parser.nextRecord(record, parseResult)
+       )
+    {
+        if(1==record.recordType)
+        {//end of file
+            break;
+        }
+        else if(4==record.recordType)
+        {//extended address
+            exAddress=(uint32_t)record.address<<16;
+        }
+        else if(0==record.recordType)
+        {//data
+            vectorToByteArray(record.data, array);
+            if(false==protocol.program(exAddress+record.address, array))
+                break;
+        }
+        else
+        {
+            break;
+        }
+    }
+    protocol.disconnect();
 }
 
 

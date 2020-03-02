@@ -41,14 +41,22 @@
 // Инициализация драйвера CAN
 //-------------------------------------
 static CanDrvController *Ctrl=nullptr;
-bool can_open(QObject *parent, int &err)
+bool can_open(int &err)
 {
     CanDrv *worker=new CanDrv;
     if(nullptr==worker){ err=TASK_MEMORY_ERR; return false; }
-    Ctrl=new CanDrvController(parent);
+    Ctrl=new CanDrvController(nullptr);
     if(nullptr==Ctrl){ err=TASK_MEMORY_ERR; return false; }
     if(false==Ctrl->Create(worker, err)){ return false; }
     return Ctrl->WorkerStart(QThread::HighPriority, nullptr, err);
+}
+void can_close(void)
+{
+    if(nullptr!=Ctrl)
+    {
+        delete Ctrl;
+        Ctrl=nullptr;
+    }
 }
 
 bool CanDrv::Init(void *pdata, int &err)
@@ -351,7 +359,7 @@ void CanDrvController::Clear(void)
 //--------------------------------------------------
 // Запрос транзакции по CAN
 //--------------------------------------------------
-uint16_t ReqComMeter(uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx)
+uint16_t ReqComMeter(uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx, int timeout)
 {
     if(0==p_tx)
     {
@@ -369,7 +377,7 @@ uint16_t ReqComMeter(uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx)
         Ctrl->Clear();
         return PRIM_SEND_ERR;
     }
-    if(false==Ctrl->Recv(dest_addr, p_rx, 10))
+    if(false==Ctrl->Recv(dest_addr, p_rx, timeout))
     {
         Ctrl->Clear();
         return PRIM_RECV_ERR;

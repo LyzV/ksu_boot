@@ -5,6 +5,8 @@
 #include <QString>
 #include <QByteArray>
 #include <QVector>
+#include <QFile>
+#include <QTextStream>
 
 //This is parser of Intel MSC-86 Object Format. This format generate hex2000.exe utility with option --intel
 
@@ -30,6 +32,7 @@ public:
         TypeError,
         DataError,
         CheckSumError,
+        FileEnd,
         UnknownError
     };
     struct FileRecord
@@ -43,15 +46,21 @@ public:
     struct ParseResult
     {
         ParseErrorCode parseErrorCode;
-        int errorLine;
-        QVector<FileRecord> records;
+        int lineCount;
     };
 
 private:
-    static bool parseLine(const QString &line, FileRecord &record, ParseErrorCode &errorCode);
+    QFile file;
+    QTextStream stream;
+    int lineCount;
+    bool parseLine(const QString &line, FileRecord &record, ParseErrorCode &errorCode) const;
 public:
-    static bool parse(const QString &fileName, ParseResult &parseResult);
-
+    ~QIntelHexParcer();
+    bool verifyHexFile(const QString &fileName, ParseResult &parseResult) const;
+    bool open(const QString &fileName);
+    void close();
+    bool firstRecord(FileRecord &record, ParseResult &parseResult);
+    bool nextRecord(FileRecord &record, ParseResult &parseResult);
 };
 
 #endif // QINTELHEXPARCER_H

@@ -48,7 +48,8 @@ SOURCES += \
     qbootstrap.cpp \
     can.cpp \
     packing.cpp \
-    qintelhexparcer.cpp
+    qintelhexparcer.cpp \
+    kiprotocol.cpp
 
 HEADERS += \
         treeitem.h \
@@ -64,9 +65,10 @@ HEADERS += \
     can.h \
     SafeQueue.h \
     SafeQueueInterface.h \
-    CanPrimitives.h \
     packing.h \
-    qintelhexparcer.h
+    qintelhexparcer.h \
+    kiprotocol.h \
+    private_can.h
 
 FORMS += \
     ctrl_form.ui \
