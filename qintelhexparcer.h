@@ -40,7 +40,7 @@ public:
         quint8 byteCount;
         quint16 address;
         quint8 recordType;
-        QVector<quint16> data;
+        QByteArray data;
         quint8 checksum;
     };
     struct ParseResult

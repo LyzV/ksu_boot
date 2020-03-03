@@ -12,8 +12,8 @@
 #define RECORD_TYPE_POSITION            (ADDRESS_POSITION+ADDRESS_SIZE)
 #define RECORD_TYPE_SIZE                2
 #define DATA_POSITION                   (RECORD_TYPE_POSITION+RECORD_TYPE_SIZE)
-#define DATA_SIZE                       4
-#define CHECKSUM_POSITION(byteCount)    (DATA_POSITION+byteCount*2)
+#define DATA_SIZE                       2
+#define CHECKSUM_POSITION(byteCount)    (DATA_POSITION+byteCount*DATA_SIZE)
 #define CHECKSUM_SIZE                   2
 
 //Digit Base
@@ -63,21 +63,18 @@ bool QIntelHexParcer::parseLine(const QString &line, FileRecord &record, ParseEr
     sum+=record.recordType;
 
     //Extract Data
-    quint8 wordCount=record.byteCount>>1;
-    record.data.clear();
-    record.data.resize(wordCount);
-    for(quint8 i=0; i<wordCount; ++i)
+    record.data.resize(record.byteCount);
+    for(quint8 i=0; i<record.byteCount; ++i)
     {
         qint8 position=DATA_POSITION + i*DATA_SIZE;
-        QStringRef wordData(&line, position, DATA_SIZE);
-        record.data[i]=(quint16)wordData.toUInt(&ok, DIGIT_BASE);
+        QStringRef byteDataRef(&line, position, DATA_SIZE);
+        record.data[i]=(quint8)byteDataRef.toUInt(&ok, DIGIT_BASE);
         if(false==ok)
         {
             errorCode=ParseErrorCode::DataError;
             return false;
         }
-        sum+=(quint8)(record.data[i]>>8);
-        sum+=(quint8)(record.data[i]);
+        sum+=record.data.at(i);
     }
     //Extract Checksum
     QStringRef checksumRef(&line, CHECKSUM_POSITION(record.byteCount), CHECKSUM_SIZE);
@@ -154,6 +151,8 @@ void QIntelHexParcer::close()
 
 bool QIntelHexParcer::firstRecord(QIntelHexParcer::FileRecord &record, QIntelHexParcer::ParseResult &parseResult)
 {
+    if(false==file.isOpen())
+        return false;
     QString line=stream.readLine(256);
     lineCount=1;
     parseResult.lineCount=1;
@@ -162,6 +161,8 @@ bool QIntelHexParcer::firstRecord(QIntelHexParcer::FileRecord &record, QIntelHex
 
 bool QIntelHexParcer::nextRecord(QIntelHexParcer::FileRecord &record, QIntelHexParcer::ParseResult &parseResult)
 {
+    if(false==file.isOpen())
+        return false;
     QString line=stream.readLine(256);
     if(line.isEmpty())
     {

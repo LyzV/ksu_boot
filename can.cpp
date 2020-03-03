@@ -359,32 +359,51 @@ void CanDrvController::Clear(void)
 //--------------------------------------------------
 // Запрос транзакции по CAN
 //--------------------------------------------------
-uint16_t ReqComMeter(uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx, int timeout)
+uint16_t ReqComMeterOne(uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx, int timeout)
 {
     if(0==p_tx)
     {
-        qDebug("ReqComMeter. Error - null \"p_tx\" buffer.");
+        qDebug("ReqComMeterOne. Error - null \"p_tx\" buffer.");
         return PRIM_NULL_PTR;
     }
 
     if(0==p_rx)
     {
-        qDebug("ReqComMeter. Error - null \"p_rx\" buffer.");
+        qDebug("ReqComMeterOne. Error - null \"p_rx\" buffer.");
         return PRIM_NULL_PTR;
     }
-    if(false==Ctrl->Send(dest_addr, p_tx))
-    {
-        Ctrl->Clear();
-        return PRIM_SEND_ERR;
-    }
+    Ctrl->Clear();
+    Ctrl->Send(dest_addr, p_tx);
     if(false==Ctrl->Recv(dest_addr, p_rx, timeout))
     {
-        Ctrl->Clear();
         return PRIM_RECV_ERR;
     }
-
     return PRIM_NO_ERR;
 }
 
+uint16_t ReqComMeter(uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx, int timeout)
+{
+    uint16_t ret;
+    for(int i=0; i<3; ++i)
+    {
+        ret=ReqComMeterOne(dest_addr, p_tx, p_rx, timeout);
+        if(PRIM_NO_ERR==ret)
+            break;
+    }
+    return ret;
+}
 
+//--------------------------------------------------
+// Только запрос по CAN
+//--------------------------------------------------
+uint16_t ReqOnly(uint8_t dest_addr, const BUF_CAN *p_tx)
+{
+    if(0==p_tx)
+    {
+        qDebug("ReqOnly. Error - null \"p_tx\" buffer.");
+        return PRIM_NULL_PTR;
+    }
+    Ctrl->Send(dest_addr, p_tx);
+    return PRIM_NO_ERR;
+}
 

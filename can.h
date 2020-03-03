@@ -20,6 +20,8 @@ typedef struct
 
 extern bool can_open(int &err);
 extern void can_close(void);
-extern uint16_t ReqComMeter(uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx, int timeout=10);
+extern uint16_t ReqComMeterOne(uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx, int timeout=10);
+extern uint16_t ReqComMeter   (uint8_t dest_addr, const BUF_CAN *p_tx, BUF_CAN *p_rx, int timeout=10);
+extern uint16_t ReqOnly       (uint8_t dest_addr, const BUF_CAN *p_tx);
 
 #endif//CAN_DRIVER

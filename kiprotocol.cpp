@@ -34,23 +34,24 @@ KiProtocol::~KiProtocol()
     can_close();
 }
 
-bool KiProtocol::create(int &err)
+bool KiProtocol::create(uint8_t addressWidth, int &err)
 {
+    this->addressWidth=addressWidth;
     return can_open(err);
-}
-
-void KiProtocol::reset()
-{
-    uint16_t cmd=CMD_RESET;
-    txBuffer.len =0;
-    txBuffer.len+=CPacking::Pack(cmd, txBuffer.data);
-    ReqComMeter(KI_DEVICE_ADDRESS, &txBuffer, &rxBuffer);
 }
 
 bool KiProtocol::connect()
 {
-    uint16_t cmd=CMD_CONNECT;
+    uint16_t cmd=CMD_RESET;
     uint8_t  qnty=0;
+    qnty+=CPacking::Pack(cmd, txBuffer.data+qnty);
+    txBuffer.len=qnty;
+    ReqOnly(KI_DEVICE_ADDRESS, &txBuffer);
+
+    QThread::msleep(1000);
+
+    cmd=CMD_CONNECT;
+    qnty=0;
     qnty+=CPacking::Pack(cmd, txBuffer.data+qnty);
     txBuffer.len=qnty;
     if(PRIM_NO_ERR!=ReqComMeter(KI_DEVICE_ADDRESS, &txBuffer, &rxBuffer))
@@ -59,8 +60,12 @@ bool KiProtocol::connect()
     if((sizeof(cmd)+sizeof(status))>rxBuffer.len)
         return false;
     qnty=0;
-    qnty+=CPacking::Unpack(cmd, rxBuffer.data+qnty); if(CMD_CONNECT!=cmd) return false;
-    qnty+=CPacking::Unpack(status, rxBuffer.data+qnty); if(STATUS_OK!=status) return false;
+    qnty+=CPacking::Unpack(cmd, rxBuffer.data+qnty);
+    if(CMD_CONNECT!=cmd)
+        return false;
+    qnty+=CPacking::Unpack(status, rxBuffer.data+qnty);
+    if(STATUS_OK!=status)
+        return false;
 
     return true;
 }
@@ -72,6 +77,7 @@ void KiProtocol::disconnect()
     qnty+=CPacking::Pack(cmd, txBuffer.data+qnty);
     txBuffer.len=qnty;
     ReqComMeter(KI_DEVICE_ADDRESS, &txBuffer, &rxBuffer);
+    QThread::msleep(1000);
 }
 
 bool KiProtocol::hver(uint16_t &ver, uint16_t &type)
@@ -94,20 +100,14 @@ bool KiProtocol::hver(uint16_t &ver, uint16_t &type)
     return true;
 }
 
-bool KiProtocol::erase(void (*callback)(void))
+bool KiProtocol::erase(uint32_t address, void (*callback)(void))
 {
     uint16_t cmd=CMD_ERASE;
     uint8_t  qnty=0;
     qnty+=CPacking::Pack(cmd, txBuffer.data+qnty);
+    qnty+=CPacking::Pack(address, txBuffer.data+qnty);
     txBuffer.len=qnty;
-    if(PRIM_NO_ERR!=ReqComMeter(KI_DEVICE_ADDRESS, &txBuffer, &rxBuffer))
-        return false;
-    uint16_t status;
-    if((sizeof(cmd)+sizeof(status))>rxBuffer.len)
-        return false;
-    qnty=0;
-    qnty+=CPacking::Unpack(cmd, rxBuffer.data+qnty); if(CMD_ERASE!=cmd) return false;
-    qnty+=CPacking::Unpack(status, rxBuffer.data+qnty); if(STATUS_OK!=status) return false;
+    ReqOnly(KI_DEVICE_ADDRESS, &txBuffer);
 
     cmd=CMD_ERASEPOLL;
     qnty=0;
@@ -116,15 +116,16 @@ bool KiProtocol::erase(void (*callback)(void))
     int cnt;//seconds
     for(cnt=0; cnt<ERASE_TIMEOUT; ++cnt)
     {
-        if(PRIM_NO_ERR==ReqComMeter(KI_DEVICE_ADDRESS, &txBuffer, &rxBuffer))
+        if(PRIM_NO_ERR==ReqComMeterOne(KI_DEVICE_ADDRESS, &txBuffer, &rxBuffer))
             break;
-        if(callback)
+        if(nullptr!=callback)
             callback();
-        QThread::sleep(1000);
+        QThread::msleep(1000);
     }
     if(ERASE_TIMEOUT<=cnt)
         return false;
 
+    uint16_t status;
     if((sizeof(cmd)+sizeof(status))>rxBuffer.len)
         return false;
     qnty=0;
@@ -154,6 +155,7 @@ bool KiProtocol::program(uint32_t address, const QByteArray &chunk)
         for(uint8_t i=0; i<length; ++i)
             txBuffer.data[qnty+i]=chunk.at(offset+i);
         qnty+=length;
+        address+=length/addressWidth;
 
         txBuffer.len=qnty;
         if(PRIM_NO_ERR!=ReqComMeter(KI_DEVICE_ADDRESS, &txBuffer, &rxBuffer))
@@ -161,8 +163,12 @@ bool KiProtocol::program(uint32_t address, const QByteArray &chunk)
         if((sizeof(cmd)+sizeof(status))>rxBuffer.len)
             return false;
         qnty=0;
-        qnty+=CPacking::Unpack(cmd, rxBuffer.data+qnty); if(CMD_PROGRAM!=cmd) return false;
-        qnty+=CPacking::Unpack(status, rxBuffer.data+qnty); if(STATUS_OK!=status) return false;
+        qnty+=CPacking::Unpack(cmd, rxBuffer.data+qnty);
+        if(CMD_PROGRAM!=cmd)
+            return false;
+        qnty+=CPacking::Unpack(status, rxBuffer.data+qnty);
+        if(STATUS_OK!=status)
+            return false;
     }
 
     return true;

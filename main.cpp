@@ -90,16 +90,6 @@ testParser();
 }
 
 
-static void vectorToByteArray(const QVector<uint16_t> &vec, QByteArray &array)
-{
-    array.clear();
-    for(int i=0; i<vec.count(); ++i)
-    {
-        uint16_t value=vec.at(i);
-        array.append((uint8_t) value);
-        array.append((uint8_t)(value>>8));
-    }
-}
 #include "qintelhexparcer.h"
 #include "kiprotocol.h"
 static void testParser()
@@ -108,18 +98,15 @@ static void testParser()
     QIntelHexParcer::ParseResult parseResult;
     QIntelHexParcer::FileRecord record;
     QIntelHexParcer parser;
-    QByteArray array;
-
-    int err;
-    if(false==protocol.create(err))
-        return;
 
     bool ret=parser.verifyHexFile("/home/root/4B-03-02.KI", parseResult);
     if(false==ret)
         return;
 
-    protocol.reset();
-    QThread::msleep(1000);
+    int err;
+    if(false==protocol.create(2, err))
+        return;
+
     if(false==protocol.connect())
         return;
 
@@ -129,10 +116,13 @@ static void testParser()
         protocol.disconnect();
         return;
     }
+    if(false==protocol.erase(0x3E8000, nullptr))
+        return;
 
-    protocol.erase(nullptr);
-
-    uint32_t exAddress=0;
+    if(false==parser.open("/home/root/4B-03-02.KI"))
+        return;
+    uint32_t exAddress=0x3E0000;
+    int count=0;
     for(
         ret=parser.firstRecord(record, parseResult);
         true==ret;
@@ -145,19 +135,20 @@ static void testParser()
         }
         else if(4==record.recordType)
         {//extended address
-            exAddress=(uint32_t)record.address<<16;
+            //exAddress=(uint32_t)record.data[0]<<16;
         }
         else if(0==record.recordType)
         {//data
-            vectorToByteArray(record.data, array);
-            if(false==protocol.program(exAddress+record.address, array))
+            if(false==protocol.program(exAddress+record.address, record.data))
                 break;
         }
         else
         {
             break;
         }
+        ++count;
     }
+    parser.close();
     protocol.disconnect();
 }
 
