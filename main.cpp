@@ -13,17 +13,12 @@
 #include "qbootstrap.h"
 #include <QSettings>
 
-
-static void testParser();
-
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("RIMERA");
     QCoreApplication::setApplicationName("ksu_boot");
-    QCoreApplication::setApplicationVersion("1.0.1");
-
-testParser();
+    QCoreApplication::setApplicationVersion("1.0.2");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Second time boot KSU");
@@ -88,69 +83,5 @@ testParser();
     view.show();
     return a.exec();
 }
-
-
-#include "qintelhexparcer.h"
-#include "kiprotocol.h"
-static void testParser()
-{
-    KiProtocol protocol;
-    QIntelHexParcer::ParseResult parseResult;
-    QIntelHexParcer::FileRecord record;
-    QIntelHexParcer parser;
-
-    bool ret=parser.verifyHexFile("/home/root/4B-03-02.KI", parseResult);
-    if(false==ret)
-        return;
-
-    int err;
-    if(false==protocol.create(2, err))
-        return;
-
-    if(false==protocol.connect())
-        return;
-
-    uint16_t ver, type;
-    if(false==protocol.hver(ver, type))
-    {
-        protocol.disconnect();
-        return;
-    }
-    if(false==protocol.erase(0x3E8000, nullptr))
-        return;
-
-    if(false==parser.open("/home/root/4B-03-02.KI"))
-        return;
-    uint32_t exAddress=0x3E0000;
-    int count=0;
-    for(
-        ret=parser.firstRecord(record, parseResult);
-        true==ret;
-        ret=parser.nextRecord(record, parseResult)
-       )
-    {
-        if(1==record.recordType)
-        {//end of file
-            break;
-        }
-        else if(4==record.recordType)
-        {//extended address
-            //exAddress=(uint32_t)record.data[0]<<16;
-        }
-        else if(0==record.recordType)
-        {//data
-            if(false==protocol.program(exAddress+record.address, record.data))
-                break;
-        }
-        else
-        {
-            break;
-        }
-        ++count;
-    }
-    parser.close();
-    protocol.disconnect();
-}
-
 
 

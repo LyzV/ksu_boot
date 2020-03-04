@@ -100,7 +100,7 @@ bool KiProtocol::hver(uint16_t &ver, uint16_t &type)
     return true;
 }
 
-bool KiProtocol::erase(uint32_t address, void (*callback)(void))
+bool KiProtocol::erase(uint32_t address)
 {
     uint16_t cmd=CMD_ERASE;
     uint8_t  qnty=0;
@@ -118,9 +118,8 @@ bool KiProtocol::erase(uint32_t address, void (*callback)(void))
     {
         if(PRIM_NO_ERR==ReqComMeterOne(KI_DEVICE_ADDRESS, &txBuffer, &rxBuffer))
             break;
-        if(nullptr!=callback)
-            callback();
         QThread::msleep(1000);
+        emit eraseSignal(cnt+1);
     }
     if(ERASE_TIMEOUT<=cnt)
         return false;

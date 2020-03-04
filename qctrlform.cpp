@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QMessageBox>
 #include "treeitem.h"
+#include "qintelhexparcer.h"
 
 #define TU(s) codec->toUnicode((s))
 
@@ -26,6 +27,7 @@ QCtrlForm::QCtrlForm(const QString &workDirectory, QWidget *parent) :
     ui->delButton->setDisabled(true);
 
     bootService=new QBootstrap(this);
+    kiProtocol=new KiProtocol(this);
 
     ui->doProgBar->setMinimum(0);
     ui->doProgBar->setMaximum(100);
@@ -36,7 +38,9 @@ QCtrlForm::QCtrlForm(const QString &workDirectory, QWidget *parent) :
     Q_ASSERT(con);
     //con=QObject::connect(this->ui->delButton, SIGNAL(pressed()), this, SLOT(deleteSlot());
     //Q_ASSERT(con);
-    con=QObject::connect(bootService, SIGNAL(programProgressSignal(int,QString)), this, SLOT(progressSlot(int,QString)));
+    con=QObject::connect(bootService, SIGNAL(programProgressSignal(int, int,QString)), this, SLOT(progressSlot(int, int,QString)));
+    Q_ASSERT(con);
+    con=QObject::connect(kiProtocol, SIGNAL(eraseSignal(int)), this, SLOT(eraseProgressSlot(int)));
     Q_ASSERT(con);
 }
 
@@ -111,25 +115,117 @@ void QCtrlForm::progSlot()
             }
             break;
         case SFT_KSUBOOT:
-        {
-            QStringList bootPathList;
-            bootPathList << workDirectory + "/ksu_boot1" << workDirectory + "/ksu_boot2";
-            bootService->create(bootPathList, "/home/root");
-            QString errorString;
-            if(true==bootService->programSoft(filePath+"/"+fileName, errorString))
             {
-                ui->doLabel->setText(TU("ÓÑÏÅØÍÎ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀË!"));
-                ui->doProgBar->setValue(100);
+                QStringList bootPathList;
+                bootPathList << workDirectory + "/ksu_boot1" << workDirectory + "/ksu_boot2";
+                bootService->create(bootPathList, "/home/root");
+                QString errorString;
+                if(true==bootService->programSoft(filePath+"/"+fileName, errorString))
+                {
+                    ui->doLabel->setText(TU("ÓÑÏÅØÍÎ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀË!"));
+                    ui->doProgBar->setValue(100);
+                }
+                else
+                {
+                    ui->errorLabel->setText(errorString);
+                    ui->errorLabel->show();
+                }
+                QApplication::processEvents();
             }
-            else
+            break;
+        case SFT_KI:
             {
-                ui->errorLabel->setText(errorString);
-                ui->errorLabel->show();
+                int max=ui->doProgBar->maximum();
+                QIntelHexParcer::ParseResult parseResult;
+                QIntelHexParcer::FileRecord record;
+                QIntelHexParcer parser;
+                QString fullFileName=filePath+"/"+fileName;
+                int lineCount;
+
+                ui->errorLabel->hide();
+                ui->progButton->setDisabled(true);
+                ui->exitButton->setDisabled(true);
+                progressSlot(max, 0, TU("Ïðîâåðÿþ ôàéë ïðîøèâêè..."));
+                QApplication::processEvents();
+                bool ret=parser.verifyHexFile(fullFileName, parseResult);
+                if(false==ret)
+                {
+                    ui->errorLabel->setText(TU("ÎØÈÁÊÀ! ÍÅÊÎÐÐÅÊÒÍÛÉ ÔÀÉË ÏÐÎØÈÂÊÈ."));
+                    ui->errorLabel->show();
+                    break;
+                }
+                lineCount=parseResult.lineCount;
+
+                progressSlot(5, 0, TU("Î÷èùàþ ïàìÿòü êîíòðîëëåðà..."));
+                QApplication::processEvents();
+                int err;
+                if(false==kiProtocol->create(2, err))
+                {
+                    ui->errorLabel->setText(TU("ÎØÈÁÊÀ! ÍÅ ÌÎÃÓ ÎÒÊÐÛÒÜ CAN-ÈÍÒÅÐÔÅÉÑ."));
+                    ui->errorLabel->show();
+                    break;
+                }
+                if(false==kiProtocol->connect())
+                {
+                    ui->errorLabel->setText(TU("ÎØÈÁÊÀ! ÍÅ ÌÎÃÓ ÑÎÅÄÈÍÈÒÜÑß Ñ ÁËÎÊÎÌ ÊÈ."));
+                    ui->errorLabel->show();
+                    break;
+                }
+                if(false==kiProtocol->erase(0x3E8000))
+                {
+                    ui->errorLabel->setText(TU("ÎØÈÁÊÀ! ÍÅ ÌÎÃÓ Î×ÈÑÒÈÒÜ ÏÀÌßÒÜ ÁËÎÊÀ ÊÈ."));
+                    ui->errorLabel->show();
+                    break;
+                }
+
+                progressSlot(parseResult.lineCount, 0, TU("Ïðîãðàììèðóþ êîíòðîëëåð..."));
+                if(false==parser.open(fullFileName))
+                {
+                    ui->errorLabel->setText(TU("ÎØÈÁÊÀ! ÍÅ ÌÎÃÓ ÎÒÊÐÛÒÜ ÔÀÉË ÏÐÎØÈÂÊÈ."));
+                    ui->errorLabel->show();
+                    break;
+                }
+                uint32_t exAddress=0x3E0000;
+                int recordCount=0;//current record
+                for(
+                    ret=parser.firstRecord(record, parseResult);
+                    true==ret;
+                    ret=parser.nextRecord(record, parseResult)
+                   )
+                {
+                    if(1==record.recordType)
+                    {//end of file
+                        ui->doProgBar->setValue(ui->doProgBar->maximum());
+                        ui->doLabel->setText(TU("ÁËÎÊ ÊÈ ÓÑÏÅØÍÎ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀÍ."));
+                        ui->progButton->setDisabled(false);
+                        ui->exitButton->setDisabled(false);
+                        QApplication::processEvents();
+                        break;
+                    }
+                    else if(4==record.recordType)
+                    {//extended address
+                        continue;
+                    }
+                    else if(0==record.recordType)
+                    {//data
+                        if(false==kiProtocol->program(exAddress+record.address, record.data))
+                        {
+                            ui->errorLabel->setText(TU("ÎØÈÁÊÀ! ÍÅ ÑÌÎÃ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀÒÜ."));
+                            ui->errorLabel->show();
+                            break;
+                        }
+                        progressSlot(lineCount, recordCount, TU("Ïðîãðàììèðóþ êîíòðîëëåð..."));
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                    ++recordCount;
+                }
+                parser.close();
+                kiProtocol->disconnect();
             }
-            QApplication::processEvents();
-        }
-        break;
-        case SFT_KI: break;
+            break;
         }
     }
     else//STT_KSU
@@ -143,9 +239,16 @@ void QCtrlForm::deleteSlot()
 
 }
 
-void QCtrlForm::progressSlot(int progress, const QString &stringProgress)
+void QCtrlForm::progressSlot(int max, int progress, const QString &stringProgress)
 {
+    progress=(int)((float)progress/max*ui->doProgBar->maximum()+0.5f);
+    progress=progress % max;
     ui->doProgBar->setValue(progress);
     ui->doLabel->setText(stringProgress);
     QApplication::processEvents();
+}
+
+void QCtrlForm::eraseProgressSlot(int seconds)
+{
+    progressSlot(5, seconds, TU("Î÷èùàþ ïàìÿòü êîíòðîëëåðà..."));
 }

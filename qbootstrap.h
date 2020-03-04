@@ -64,7 +64,7 @@ public:
     void printBootPathList(const QStringList &bootPathList) const;
 
 signals:
-    void programProgressSignal(int progress, QString stringProgress);
+    void programProgressSignal(int max, int progress, QString stringProgress);
 };
 
 #endif // QBOOTSTRAP_H
