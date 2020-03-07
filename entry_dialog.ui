@@ -34,7 +34,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Для входа в загрузчик
+    <string>Для обновления ПО
 нажмите клавишу ВВОД</string>
    </property>
   </widget>

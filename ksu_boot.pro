@@ -50,7 +50,9 @@ SOURCES += \
     packing.cpp \
     qintelhexparcer.cpp \
     gpio.cpp \
-    cpio.cpp
+    cpio.cpp \
+    kiprotocol.cpp \
+    maindialog.cpp
 
 HEADERS += \
         treeitem.h \
@@ -66,11 +68,13 @@ HEADERS += \
     can.h \
     SafeQueue.h \
     SafeQueueInterface.h \
-    CanPrimitives.h \
     packing.h \
     qintelhexparcer.h \
     gpio.h \
-    cpio.h
+    cpio.h \
+    kiprotocol.h \
+    private_can.h \
+    maindialog.h
 
 FORMS += \
     ctrl_form.ui \

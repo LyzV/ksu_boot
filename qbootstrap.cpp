@@ -295,7 +295,7 @@ bool QBootstrap::programSoft(const QString &soft, QString &errorString)
     errorString=TU("");
 
     processString=TU("Подготовка ...");
-    emit programProgressSignal(0, processString);
+    emit programProgressSignal(100, 0, processString);
 
     if(0 > targetIndex)
         targetIndex=0;
@@ -313,7 +313,7 @@ bool QBootstrap::programSoft(const QString &soft, QString &errorString)
         return false;
     }
 
-    emit programProgressSignal(50, TU("Распаковка прошивки ..."));
+    emit programProgressSignal(100, 50, TU("Распаковка прошивки ..."));
     // tar -xf soft -C bootInfo.bootDirectoryPath
     QProcess process;
     QStringList arguments;
@@ -349,7 +349,7 @@ bool QBootstrap::programSoft(const QString &soft, QString &errorString)
     counterFile.close();
 
 
-    emit programProgressSignal(80, TU("Проверка ..."));
+    emit programProgressSignal(100, 80, TU("Проверка ..."));
     buildBootInfo();
     if(0>bootIndex)
     {
@@ -368,7 +368,7 @@ bool QBootstrap::programSoft(const QString &soft, QString &errorString)
     // sync; drop_caches
     QBashCmd::flush_storage();
 
-    emit programProgressSignal(90, TU("ЗАПРОГРАММИРОВАНО УСПЕШНО!"));
+    emit programProgressSignal(100, 100, TU("ЗАПРОГРАММИРОВАНО УСПЕШНО!"));
 
     return true;
 }
