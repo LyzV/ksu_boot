@@ -12,13 +12,14 @@
 #include "bash_cmd.h"
 #include "qbootstrap.h"
 #include <QSettings>
+#include "maindialog.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("RIMERA");
     QCoreApplication::setApplicationName("ksu_boot");
-    QCoreApplication::setApplicationVersion("1.0.2");
+    QCoreApplication::setApplicationVersion("1.0.3");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Second time boot KSU");
@@ -72,15 +73,18 @@ int main(int argc, char *argv[])
         a.exit(1);
         return 1;
     }
-    QKsuTreeView view(currentWorkDirectoryName);
-    view.setModel(&model);
-    view.setAutoScroll(true);
-    view.setColumnWidth(0, 420);
-    view.setFont(QFont("", 15));
-    view.setItemsExpandable(true);
-    view.setWindowTitle(QObject::tr("Simple Tree Model"));
-    view.setGeometry(QRect(0, 0, 640, 480));
-    view.show();
+
+    MainDialog mainDialog(&model, currentWorkDirectoryName);
+    mainDialog.show();
+//    QKsuTreeView view(currentWorkDirectoryName);
+//    view.setModel(&model);
+//    view.setAutoScroll(true);
+//    view.setColumnWidth(0, 420);
+//    view.setFont(QFont("", 15));
+//    view.setItemsExpandable(true);
+//    view.setWindowTitle(QObject::tr("Simple Tree Model"));
+//    view.setGeometry(QRect(0, 0, 640, 480));
+//    view.show();
     return a.exec();
 }
 

@@ -241,8 +241,8 @@ void QCtrlForm::deleteSlot()
 
 void QCtrlForm::progressSlot(int max, int progress, const QString &stringProgress)
 {
-    progress=(int)((float)progress/max*ui->doProgBar->maximum()+0.5f);
     progress=progress % max;
+    progress=(int)((float)progress/max*ui->doProgBar->maximum()+0.5f);
     ui->doProgBar->setValue(progress);
     ui->doLabel->setText(stringProgress);
     QApplication::processEvents();
@@ -250,5 +250,5 @@ void QCtrlForm::progressSlot(int max, int progress, const QString &stringProgres
 
 void QCtrlForm::eraseProgressSlot(int seconds)
 {
-    progressSlot(5, seconds, TU("Очищаю память контроллера..."));
+    progressSlot(4, seconds, TU("Очищаю память контроллера..."));
 }

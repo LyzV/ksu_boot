@@ -49,7 +49,8 @@ SOURCES += \
     can.cpp \
     packing.cpp \
     qintelhexparcer.cpp \
-    kiprotocol.cpp
+    kiprotocol.cpp \
+    maindialog.cpp
 
 HEADERS += \
         treeitem.h \
@@ -68,7 +69,8 @@ HEADERS += \
     packing.h \
     qintelhexparcer.h \
     kiprotocol.h \
-    private_can.h
+    private_can.h \
+    maindialog.h
 
 FORMS += \
     ctrl_form.ui \
