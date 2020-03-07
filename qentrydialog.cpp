@@ -8,9 +8,11 @@ QEntryDialog::QEntryDialog(QWidget *parent):
     ui->setupUi(this);
 
     timer=new QTimer(this);
+    clearTimer=new QTimer(this);
     Q_ASSERT(timer);
     connect(ui->entryButton, SIGNAL(pressed()), this, SLOT(accept()));
     connect(timer, SIGNAL(timeout()), this, SLOT(reject()));
+    connect(clearTimer, SIGNAL(timeout()), this, SLOT(clearSlot()));
 }
 
 QEntryDialog::~QEntryDialog()
@@ -20,8 +22,15 @@ QEntryDialog::~QEntryDialog()
 
 int QEntryDialog::exec()
 {
-    timer->start(2000);
+
+    clearTimer->start(4000);
+    timer->start(4100);
     return QDialog::exec();
+}
+
+void QEntryDialog::clearSlot()
+{
+    ui->entryButton->setText("");
 }
 
 

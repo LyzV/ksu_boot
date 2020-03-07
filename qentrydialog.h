@@ -13,6 +13,7 @@ class QEntryDialog: public QDialog
     Q_OBJECT
 
     QTimer *timer=nullptr;
+    QTimer *clearTimer=nullptr;
     Ui::entryDialog *ui=nullptr;
 
 public:
@@ -20,6 +21,9 @@ public:
     ~QEntryDialog();
 
     virtual int exec();
+
+private slots:
+    void clearSlot(void);
 };
 
 
