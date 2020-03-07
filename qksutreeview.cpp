@@ -67,10 +67,7 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                     }
                 }
             }
-            else if(
-                    (Qt::Key_Home  ==key)||
-                    (Qt::Key_Escape==key)
-                   )
+            else if(Qt::Key_Home  ==key)
             {
                 QStringList bootPathList;
                 QBootstrap bootService;
@@ -79,6 +76,10 @@ void QKsuTreeView::keyPressEvent(QKeyEvent *event)
                 bootService.create(bootPathList, "/home/root");
                 if(true==bootService.bootstrap())
                     QApplication::quit();
+            }
+            else if(Qt::Key_Escape  ==key)
+            {
+                //Ничего не делаем
             }
             else
             {

@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("RIMERA");
     QCoreApplication::setApplicationName("ksu_boot");
-    QCoreApplication::setApplicationVersion("1.0.5");
+    QCoreApplication::setApplicationVersion("1.0.6");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Second time boot KSU");
