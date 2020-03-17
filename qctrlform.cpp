@@ -90,6 +90,7 @@ void QCtrlForm::progSlot()
     ui->doProgBar->setValue(0);
     ui->doProgBar->show();
     QApplication::processEvents();
+
     if(STT_USB==storageType)
     {
         switch(softType)
@@ -185,7 +186,8 @@ void QCtrlForm::progSlot()
                     ui->errorLabel->show();
                     break;
                 }
-                uint32_t exAddress=0x3E0000;
+                quint32 address;
+                QByteArray data;
                 int recordCount=0;//current record
                 for(
                     ret=parser.firstRecord(record, parseResult);
@@ -193,32 +195,21 @@ void QCtrlForm::progSlot()
                     ret=parser.nextRecord(record, parseResult)
                    )
                 {
-                    if(1==record.recordType)
+                    if(false==parser.toRawData(record, address, data))
                     {//end of file
                         ui->doProgBar->setValue(ui->doProgBar->maximum());
                         ui->doLabel->setText(TU("ÁËÎÊ ÊÈ ÓÑÏÅØÍÎ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀÍ."));
-                        ui->progButton->setDisabled(false);
-                        ui->exitButton->setDisabled(false);
-                        QApplication::processEvents();
                         break;
                     }
-                    else if(4==record.recordType)
-                    {//extended address
-                        continue;
-                    }
-                    else if(0==record.recordType)
-                    {//data
-                        if(false==kiProtocol->program(exAddress+record.address, record.data))
+                    if(0!=data.count())
+                    {
+                        if(false==kiProtocol->program(address, data))
                         {
                             ui->errorLabel->setText(TU("ÎØÈÁÊÀ! ÍÅ ÑÌÎÃ ÇÀÏÐÎÃÐÀÌÌÈÐÎÂÀÒÜ."));
                             ui->errorLabel->show();
                             break;
                         }
                         progressSlot(lineCount, recordCount, TU("Ïðîãðàììèðóþ êîíòðîëëåð..."));
-                    }
-                    else
-                    {
-                        continue;
                     }
                     ++recordCount;
                 }
@@ -231,7 +222,12 @@ void QCtrlForm::progSlot()
     else//STT_KSU
     {
     }
+    ui->progButton->setEnabled(true);
+    ui->exitButton->setEnabled(true);
+    QApplication::processEvents();
     ui->exitButton->setFocus();
+    QApplication::processEvents();
+
 }
 
 void QCtrlForm::deleteSlot()
