@@ -186,6 +186,7 @@ void QCtrlForm::progSlot()
                     ui->errorLabel->show();
                     break;
                 }
+
                 quint32 address;
                 QByteArray data;
                 int recordCount=0;//current record
