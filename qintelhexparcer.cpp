@@ -156,6 +156,11 @@ bool QIntelHexParcer::firstRecord(QIntelHexParcer::FileRecord &record, QIntelHex
     QString line=stream.readLine(256);
     lineCount=1;
     parseResult.lineCount=1;
+
+    linearBaseAddress=0;
+    segmentBaseAddress=0;
+    addressMode=DirectAddressMode;
+
     return parseLine(line, record, parseResult.parseErrorCode);
 }
 
@@ -173,4 +178,60 @@ bool QIntelHexParcer::nextRecord(QIntelHexParcer::FileRecord &record, QIntelHexP
     ++lineCount;
     parseResult.lineCount=lineCount;
     return parseLine(line, record, parseResult.parseErrorCode);
+}
+
+bool QIntelHexParcer::toRawData(const FileRecord &record, quint32 &address, QByteArray &data)
+{
+    address=0;
+    data.clear();
+
+    switch(record.recordType)
+    {
+    default: break;
+    case 0://Data Record
+        {
+            if(LinearAddressMode==addressMode)
+            {
+                address=linearBaseAddress + record.address;
+            }
+            else if(SegmentAddressMode==addressMode)
+            {
+                address=segmentBaseAddress + record.address;
+            }
+            else//DirectAddressMode
+            {
+                address=record.address;
+            }
+            data.append(record.data);
+        }
+        break;
+    case 1://End of File Record
+        {
+            return false;
+        }
+        break;
+    case 2://Extended Segment Address Record
+        {
+            segmentBaseAddress =(quint32)record.data.at(0)<<12;
+            segmentBaseAddress+=(quint32)record.data.at(1)<<4;
+            addressMode=SegmentAddressMode;
+        }
+        break;
+    case 3://Start Segment Address Record - только для 8086/80186
+        {
+        }
+        break;
+    case 4://Extended Linear Address Record
+        {
+            linearBaseAddress =(quint32)record.data.at(0)<<24;
+            linearBaseAddress+=(quint32)record.data.at(1)<<16;
+            addressMode=LinearAddressMode;
+        }
+        break;
+    case 5://Start Linear Address Record - только для i80386
+        {
+        }
+        break;
+    }
+    return true;
 }

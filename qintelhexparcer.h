@@ -49,9 +49,19 @@ public:
         int lineCount;
     };
 
+    enum AddressMode
+    {
+        DirectAddressMode=0,
+        LinearAddressMode,
+        SegmentAddressMode
+    };
+
 private:
     QFile file;
     QTextStream stream;
+    quint32 linearBaseAddress;//LBA
+    quint32 segmentBaseAddress;//SBA
+    AddressMode addressMode;
     int lineCount;
     bool parseLine(const QString &line, FileRecord &record, ParseErrorCode &errorCode) const;
 public:
@@ -61,6 +71,7 @@ public:
     void close();
     bool firstRecord(FileRecord &record, ParseResult &parseResult);
     bool nextRecord(FileRecord &record, ParseResult &parseResult);
+    bool toRawData(const FileRecord &record, quint32 &address, QByteArray &data);
 };
 
 #endif // QINTELHEXPARCER_H
