@@ -98,6 +98,13 @@ void QCtrlForm::progSlot()
         default:
         case SFT_KSUWORK:
             {
+                int max=ui->doProgBar->maximum();
+                ui->errorLabel->hide();
+                ui->progButton->setDisabled(true);
+                ui->exitButton->setDisabled(true);
+                progressSlot(max, 0, TU(""));
+                QApplication::processEvents();
+
                 QStringList bootPathList;
                 bootPathList << workDirectory + "/ksu1" << workDirectory + "/ksu2";
                 bootService->create(bootPathList, "/home/root");
@@ -117,6 +124,13 @@ void QCtrlForm::progSlot()
             break;
         case SFT_KSUBOOT:
             {
+                int max=ui->doProgBar->maximum();
+                ui->errorLabel->hide();
+                ui->progButton->setDisabled(true);
+                ui->exitButton->setDisabled(true);
+                progressSlot(max, 0, TU(""));
+                QApplication::processEvents();
+
                 QStringList bootPathList;
                 bootPathList << workDirectory + "/ksu_boot1" << workDirectory + "/ksu_boot2";
                 bootService->create(bootPathList, "/home/root");
